@@ -49,11 +49,11 @@
   }
 
   .glass-dock {
-    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0, 0, 0, 0.08)];
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_#00000014];
   }
 
   .apple-card {
-    @apply bg-white rounded-3xl shadow-[0_4px_24px_rgba(0, 0, 0, 0.04)] border border-[var(--color-apple-border)]/30;
+    @apply bg-white rounded-3xl shadow-[0_4px_24px_#0000000a] border border-[var(--color-apple-border)]/30;
   }
 
   /* NextStep Hero Title Gradient */
