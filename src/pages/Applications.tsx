@@ -300,7 +300,7 @@ const Applications = () => {
                                 <div className="sm:col-span-2">
                                     <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">Süreç Notları & Yorumlar</div>
                                     <div className="text-base text-black/80 bg-black/5 rounded-2xl p-4 min-h-[80px]">
-                                        {selectedApp.comments || 'Henüz not eklenmemiş.'}
+                                        {selectedApp.notes || 'Henüz not eklenmemiş.'}
                                     </div>
                                 </div>
 
@@ -312,13 +312,13 @@ const Applications = () => {
                                 </div>
 
                                 <div>
-                                    <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">İK Görüşmesi</div>
-                                    <div className="text-base text-black font-medium">{selectedApp.hrInterview || '-'}</div>
+                                    <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">Mülakat Notları</div>
+                                    <div className="text-base text-black font-medium">{selectedApp.interviewNotes || '-'}</div>
                                 </div>
 
                                 <div>
-                                    <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">Teknik / Diğer Mülakat</div>
-                                    <div className="text-base text-black font-medium">{selectedApp.otherInterviews || '-'}</div>
+                                    <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">Mülakat Tarihi</div>
+                                    <div className="text-base text-black font-medium">{selectedApp.interviewDate || '-'}</div>
                                 </div>
 
                                 {selectedApp.testLink && (
