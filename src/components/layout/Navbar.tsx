@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
 import { Menu, X } from 'lucide-react';
+import NextLogo from '../icons/NEXT.svg';
 
 export const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -28,10 +29,12 @@ export const Navbar = () => {
                     }`}
             >
                 <div className="max-w-[1200px] mx-auto px-6 flex items-center justify-between">
-                    <Link to="/" className="text-xl font-bold tracking-tighter text-black flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center font-bold text-lg">
-                            N
-                        </div>
+                    <Link to="/" className="text-xl font-bold tracking-tighter text-black flex items-center gap-[10px] group">
+                        <img
+                            src={NextLogo}
+                            alt="NextStep Logo"
+                            className="h-8 transition-transform duration-300 group-hover:scale-105"
+                        />
                         NextStep
                     </Link>
 

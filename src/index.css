@@ -3,13 +3,18 @@
 @theme {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
-  --color-apple-bg: #fbfbfd;
+  --color-apple-bg: #fdfdfd;
   --color-apple-text: #1d1d1f;
   --color-apple-gray: #86868b;
   --color-apple-light: #f5f5f7;
-  --color-apple-border: #d2d2d7;
+  --color-apple-border: #e5e5ea;
   --color-apple-blue: #0071e3;
   --color-apple-blue-hover: #0077ed;
+
+  /* Global Gradients */
+  --gradient-main: linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #ec4899 100%);
+  --gradient-hover: linear-gradient(135deg, #0ea5e9 0%, #60a5fa 50%, #f472b6 100%);
+  --gradient-danger: linear-gradient(135deg, #f43f5e 0%, #fb923c 100%);
 
   --color-background: var(--color-apple-bg);
   --color-foreground: var(--color-apple-text);
@@ -17,30 +22,23 @@
   --radius-dock: 24px;
 }
 
-@layer base {
-  :root {
-    --background: var(--color-apple-bg);
-    --foreground: var(--color-apple-text);
-  }
+body {
+  @apply bg-background text-foreground bg-[var(--color-apple-bg)] text-[var(--color-apple-text)] antialiased font-sans;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Hide scrollbar for an Apple-like smooth feel */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background-color: var(--color-apple-bg);
+  color: var(--color-apple-text);
+}
 
-  body {
-    @apply bg-background text-foreground bg-[var(--color-apple-bg)] text-[var(--color-apple-text)] antialiased font-sans;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    /* Hide scrollbar for an Apple-like smooth feel */
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    background-color: var(--color-apple-bg);
-    color: var(--color-apple-text);
-  }
+body::-webkit-scrollbar {
+  display: none;
+}
 
-  body::-webkit-scrollbar {
-    display: none;
-  }
-
-  ::selection {
-    @apply bg-[var(--color-apple-blue)] text-white;
-  }
+::selection {
+  @apply bg-[var(--color-apple-blue)] text-white;
 }
 
 @layer utilities {
@@ -49,28 +47,133 @@
   }
 
   .glass-dock {
-    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_#00000014];
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_#0000000f];
   }
 
   .apple-card {
-    @apply bg-white rounded-3xl shadow-[0_4px_24px_#0000000a] border border-[var(--color-apple-border)]/30;
+    @apply bg-white/80 backdrop-blur-xl rounded-[24px] shadow-[0_4px_24px_#0000000a] border border-[var(--color-apple-border)]/50;
   }
 
-  /* NextStep Hero Title Gradient */
+  .apple-glass-card {
+    @apply bg-white/70 backdrop-blur-2xl rounded-[32px] shadow-[0_12px_48px_#00000014] border border-white/60;
+  }
+
+  /* Core Gradient Button */
+  .btn-gradient {
+    @apply bg-gradient-to-r from-indigo-500 via-blue-500 to-pink-500 text-white font-medium rounded-full transition-all duration-300;
+  }
+
+  .btn-gradient:hover {
+    @apply shadow-[0_8px_24px_#3b82f64d] scale-[1.02];
+  }
+
+  /* Ghost Button */
+  .btn-ghost {
+    @apply bg-transparent border border-black/10 text-black font-medium rounded-full transition-all duration-300;
+  }
+
+  .btn-ghost:hover {
+    @apply bg-black/5 scale-[1.02];
+  }
+
+  /* Focus Ring */
+  .focus-gradient-ring:focus {
+    @apply outline-none ring-2 ring-blue-400 ring-offset-2 border-transparent;
+  }
+
+  /* NextStep Hero Title & Footer Gradient */
   .animated-gradient-text {
-    background: linear-gradient(-45deg, #0071e3, #5e5ce6, #ff2d55, #0071e3);
+    background: linear-gradient(-45deg, #ff2d55, #5e5ce6, #0071e3, #34c759, #ff9500, #ff2d55);
     background-size: 300% 300%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     color: transparent;
-    animation: gradientText 8s ease infinite;
+    animation: gradientText 8s ease-in-out infinite;
+  }
+
+  .cta-gradient-bg {
+    background: linear-gradient(135deg, #ab47bc 0%, #0071e3 50%, #ff2d55 100%);
+    background-size: 200% 200%;
+    animation: gradientBg 12s ease-in-out infinite;
+  }
+
+  /* Animated Border Button for Hero */
+  .animated-border-button {
+    position: relative;
+    background: #000;
+    color: #fff;
+    border-radius: 9999px;
+    z-index: 1;
+    transition: all 0.3s ease;
+  }
+
+  .animated-border-button::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    z-index: -1;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #ff2d55, #5e5ce6, #0071e3, #34c759, #ff9500, #ff2d55);
+    background-size: 300% 300%;
+    animation: gradientText 4s linear infinite;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+  }
+
+  .animated-border-button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #000;
+    border-radius: 9999px;
+    z-index: -1;
+  }
+
+  .animated-border-button:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.4);
+  }
+
+  .animated-border-button:hover::before {
+    opacity: 1;
+  }
+
+  /* 3D Bar Inner Glow */
+  .inner-glow-bar {
+    box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.4), 0 4px 12px rgba(0, 0, 0, 0.05);
   }
 }
 
 /* Custom Scroll animations setup */
 html {
   scroll-behavior: smooth;
+}
+
+@keyframes gradientBg {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pulseOpacity {
+
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes gradientText {

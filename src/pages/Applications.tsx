@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../store/useAppStore';
-import { H2, Caption } from '../components/common/Typography';
+import { Caption } from '../components/common/Typography';
 import { Reveal } from '../components/common/Reveal';
 import { Search, Filter, ArrowDown, ArrowUp, Download, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -90,26 +90,28 @@ const Applications = () => {
     };
 
     return (
-        <div className="mx-auto max-w-[1400px] px-6 pt-24 pb-48">
+        <div className="mx-auto max-w-[1300px] px-6 pt-24 pb-48">
 
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                 <Reveal direction="down" duration={0.6}>
                     <div className="flex items-center gap-6">
                         <div>
-                            <Caption>Takip</Caption>
-                            <H2 className="mt-1">Tüm Başvurular</H2>
+                            <Caption>TAKİP</Caption>
+                            <h1 className="mt-1 text-[clamp(28px,4vw,36px)] font-bold tracking-tight text-[#1d1d1f]">
+                                Tüm Başvurular
+                            </h1>
                         </div>
                         {/* Export Actions */}
                         <div className="flex items-center gap-2 mt-4 ml-4">
                             <button
                                 onClick={exportToExcel}
-                                className="flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-600 transition-colors hover:bg-emerald-500/20"
+                                className="flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-600 transition-colors hover:bg-emerald-100"
                             >
                                 <Download size={14} /> EXCEL
                             </button>
                             <button
                                 onClick={exportToPDF}
-                                className="flex items-center gap-2 rounded-full bg-rose-500/10 px-4 py-2 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-500/20"
+                                className="flex items-center gap-2 rounded-full bg-rose-50 px-4 py-2 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-100"
                             >
                                 <Download size={14} /> PDF
                             </button>
@@ -129,7 +131,7 @@ const Applications = () => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Firma veya pozisyon ara..."
-                                className="w-full sm:w-64 rounded-full border border-black/10 bg-black/5 py-2.5 pl-11 pr-4 text-sm outline-none transition-all focus:border-[#0071e3] focus:bg-white focus:ring-2 focus:ring-[#0071e3]/20"
+                                className="w-full sm:w-64 rounded-full border border-black/10 bg-[#fbfbfd] py-2.5 pl-11 pr-4 text-sm transition-all focus-gradient-ring"
                             />
                         </div>
 
@@ -141,7 +143,7 @@ const Applications = () => {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="w-full sm:w-48 appearance-none rounded-full border border-black/10 bg-black/5 py-2.5 pl-11 pr-10 text-sm outline-none transition-all focus:border-[#0071e3] focus:bg-white focus:ring-2 focus:ring-[#0071e3]/20"
+                                className="w-full sm:w-48 appearance-none rounded-full border border-black/10 bg-[#fbfbfd] py-2.5 pl-11 pr-10 text-sm transition-all focus-gradient-ring"
                             >
                                 <option value="">Tüm Durumlar</option>
                                 <option value="Süreçte">Süreçte</option>
@@ -155,23 +157,23 @@ const Applications = () => {
                 </Reveal>
             </div>
 
-            <Reveal direction="up" delay={0.2}>
-                <div className="flex flex-col gap-4">
+            <Reveal direction="up" delay={0.2} className="w-full">
+                <div className="flex flex-col gap-4 apple-glass-card p-4 sm:p-8">
                     {/* Desktop Headers */}
-                    <div className="hidden lg:grid lg:grid-cols-11 gap-4 px-6 pb-2 text-xs font-semibold text-black/50 uppercase tracking-wider">
-                        <div className="col-span-2 cursor-pointer hover:text-black flex items-center gap-1" onClick={() => handleSort('companyName')}>
+                    <div className="hidden lg:grid lg:grid-cols-11 gap-4 px-6 py-4 rounded-2xl bg-gradient-to-r from-indigo-50/50 to-pink-50/50 border border-black/5 text-xs font-semibold text-black/60 uppercase tracking-wider">
+                        <div className="col-span-2 cursor-pointer hover:text-black flex items-center gap-1 transition-colors" onClick={() => handleSort('companyName')}>
                             Firma / Pozisyon
                             {sortField === 'companyName' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
                         </div>
                         <div className="col-span-2">Durum</div>
-                        <div className="col-span-1 cursor-pointer hover:text-black flex items-center gap-1" onClick={() => handleSort('date')}>
+                        <div className="col-span-1 cursor-pointer hover:text-black flex items-center gap-1 transition-colors" onClick={() => handleSort('date')}>
                             Tarih
                             {sortField === 'date' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
                         </div>
                         <div className="col-span-1">Platform</div>
                         <div className="col-span-1">CV</div>
                         <div className="col-span-1">Motivasyon</div>
-                        <div className="col-span-1">Test</div>
+                        <div className="col-span-1 text-center">Test</div>
                         <div className="col-span-2 text-right">Aksiyon</div>
                     </div>
 
@@ -189,20 +191,15 @@ const Applications = () => {
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -10 }}
                                         transition={{ delay: index * 0.05 }}
-                                        className="group flex flex-col lg:grid lg:grid-cols-11 gap-4 lg:items-center rounded-3xl p-6 bg-white shadow-[0_4px_24px_#0000000a] border border-black/5 hover:shadow-[0_8px_32px_#00000014] transition-all"
+                                        className="group flex flex-col lg:grid lg:grid-cols-11 gap-4 lg:items-center rounded-2xl p-4 sm:px-6 bg-white/60 shadow-sm border border-black/5 hover:bg-white hover:shadow-md transition-all hover:-translate-y-0.5"
                                     >
                                         <div className="col-span-2 flex flex-col">
-                                            <div className="text-base font-bold text-black">{app.companyName}</div>
+                                            <div className="text-base font-bold text-black group-hover:bg-gradient-to-r group-hover:from-indigo-600 group-hover:to-rose-500 group-hover:bg-clip-text group-hover:text-transparent transition-all">{app.companyName}</div>
                                             <div className="text-sm text-black/60">{app.position}</div>
                                         </div>
 
                                         <div className="col-span-2 flex items-center">
-                                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium
-                                                ${app.status === 'Reddedildi' ? 'bg-rose-500/10 text-rose-600' : ''}
-                                                ${app.status === 'Süreçte' ? 'bg-blue-500/10 text-blue-600' : ''}
-                                                ${app.status === 'Olumlu' || app.status === 'Teklif Alındı' ? 'bg-emerald-500/10 text-emerald-600' : ''}
-                                                ${app.status === 'Görüşme Bekleniyor' ? 'bg-amber-500/10 text-amber-600' : ''}
-                                            `}>
+                                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-black/5 text-black/80`}>
                                                 {app.status}
                                             </span>
                                         </div>
@@ -211,7 +208,7 @@ const Applications = () => {
                                             {new Date(app.date).toLocaleDateString('tr-TR')}
                                         </div>
 
-                                        <div className="col-span-1 text-sm font-medium text-black/80">
+                                        <div className="col-span-1 text-sm text-black/80">
                                             {app.platform || '-'}
                                         </div>
 
@@ -223,25 +220,25 @@ const Applications = () => {
                                             {app.motivation ? 'Eklendi' : '-'}
                                         </div>
 
-                                        <div className="col-span-1 text-sm text-blue-600">
+                                        <div className="col-span-1 text-sm text-center w-full">
                                             {app.testLink ? (
-                                                <a href={app.testLink} target="_blank" rel="noopener noreferrer" className="hover:underline" onClick={(e) => e.stopPropagation()}>
-                                                    Link
+                                                <a href={app.testLink} target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:text-indigo-600 font-medium hover:underline" onClick={(e) => e.stopPropagation()}>
+                                                    Test
                                                 </a>
                                             ) : (
                                                 <span className="text-black/30">-</span>
                                             )}
                                         </div>
 
-                                        <div className="col-span-2 flex items-center lg:justify-end gap-3 max-lg:mt-4">
+                                        <div className="col-span-2 flex items-center lg:justify-end gap-2 sm:gap-3 lg:gap-2 max-lg:mt-4">
                                             {app.jobLink && (
-                                                <a href={app.jobLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-full bg-blue-50 px-4 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors">
-                                                    [ İlanı Aç ]
+                                                <a href={app.jobLink} target="_blank" rel="noopener noreferrer" className="btn-gradient inline-flex items-center justify-center px-4 py-1.5 text-xs text-white" onClick={(e) => e.stopPropagation()}>
+                                                    İlanı Aç
                                                 </a>
                                             )}
                                             <button
                                                 onClick={() => setSelectedApp(app)}
-                                                className="inline-flex items-center justify-center rounded-full bg-black/5 px-4 py-1.5 text-xs font-semibold text-black hover:bg-black/10 transition-colors"
+                                                className="inline-flex items-center justify-center rounded-full border border-black/10 bg-transparent px-4 py-1.5 text-xs font-semibold text-black hover:border-indigo-400 hover:bg-black/5 transition-all"
                                             >
                                                 Detaylar
                                             </button>
