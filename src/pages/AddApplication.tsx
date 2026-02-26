@@ -41,9 +41,31 @@ const AddApplication = () => {
         if (formData.companyName && formData.position) {
             addApplication(formData as Omit<Application, 'id' | 'no' | 'createdAt'>);
             setShowToast(true);
+
+            // Clear form state
+            setFormData({
+                companyName: '',
+                position: '',
+                jobLink: '',
+                date: new Date().toISOString().split('T')[0],
+                motivation: '',
+                postApplication: '',
+                status: 'Süreçte',
+                comments: '',
+                hrInterview: '',
+                notes: '',
+                otherInterviews: '',
+                notes2: '',
+                testLink: '',
+                cvVersion: 'V1 Düz',
+                motivationTemplate: '',
+                city: 'İstanbul',
+                platform: 'LinkedIn'
+            });
+
             setTimeout(() => {
                 setShowToast(false);
-                navigate('/');
+                navigate('/dashboard');
             }, 1500);
         }
     };
@@ -218,7 +240,7 @@ const AddApplication = () => {
                         className="fixed bottom-32 left-1/2 z-50 rounded-full bg-black/80 backdrop-blur-md px-6 py-3 text-white shadow-2xl flex items-center gap-2"
                     >
                         <div className="h-2 w-2 rounded-full bg-green-400" />
-                        Başvuru başarıyla eklendi!
+                        Başvuru başarıyla kaydedildi
                     </motion.div>
                 )}
             </AnimatePresence>

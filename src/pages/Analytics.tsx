@@ -69,26 +69,30 @@ const Analytics = () => {
                 </Text>
             </Reveal>
 
-            <div className="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="mt-16 grid grid-cols-1 gap-6 lg:grid-cols-2">
 
-                {/* Metric 1 */}
+                {/* Row 1: Mülakat Oranı & Aylık Başvuru Hızı */}
                 <Reveal direction="up" delay={0.1}>
-                    <div className="apple-card p-8 h-full flex flex-col justify-center">
-                        <div className="text-sm font-medium text-black/50">Mülakat Oranı</div>
-                        <div className="mt-2 text-[84px] font-medium leading-none tracking-tighter text-black">
-                            %{interviewRate}
+                    <div className="apple-card p-6 min-h-[400px] flex flex-col justify-center shadow-[0_4px_24px_#00000008]">
+                        <div className="flex items-center gap-3 mb-6">
+                            <AnimatedIcon type="pie" size={24} />
+                            <H3>Mülakat Oranı</H3>
                         </div>
-                        <div className="mt-4 text-sm text-black/60">
-                            Mülakat aşamasına geçme yüzdeniz. Hedef: %15+
+                        <div className="flex-1 flex flex-col justify-center items-center text-center">
+                            <div className="text-[100px] font-medium leading-none tracking-tighter text-[#0071e3]">
+                                %{interviewRate}
+                            </div>
+                            <div className="mt-6 text-base font-medium text-black/60 max-w-xs mx-auto">
+                                Başvurularınızın mülakata dönüşme oranı. Endüstri ortalaması %10-15 civarındadır.
+                            </div>
                         </div>
                     </div>
                 </Reveal>
 
-                {/* Chart 1: Monthly Trends */}
-                <Reveal direction="up" delay={0.2} className="lg:col-span-2">
-                    <div className="apple-card p-8 h-[400px] flex flex-col">
-                        <div className="flex items-center gap-4 mb-8">
-                            <AnimatedIcon type="bar" size={28} />
+                <Reveal direction="up" delay={0.2}>
+                    <div className="apple-card p-6 min-h-[400px] flex flex-col shadow-[0_4px_24px_#00000008]">
+                        <div className="flex items-center gap-3 mb-6">
+                            <AnimatedIcon type="bar" size={24} />
                             <H3>Aylık Başvuru Hızı</H3>
                         </div>
                         <div className="flex-1 w-full relative">
@@ -117,12 +121,12 @@ const Analytics = () => {
                     </div>
                 </Reveal>
 
-                {/* Chart 2: Status Breakdown */}
-                <Reveal direction="up" delay={0.3} className="lg:col-span-1">
-                    <div className="apple-card p-8 h-[400px] flex flex-col items-center">
-                        <div className="flex items-center gap-4 mb-4 w-full">
-                            <AnimatedIcon type="pie" size={28} />
-                            <H3 className="w-full text-left">Durum Dağılımı</H3>
+                {/* Row 2: Durum Dağılımı & CV Performans */}
+                <Reveal direction="up" delay={0.3}>
+                    <div className="apple-card p-6 min-h-[400px] flex flex-col shadow-[0_4px_24px_#00000008]">
+                        <div className="flex items-center gap-3 mb-4 w-full">
+                            <AnimatedIcon type="pie" size={24} />
+                            <H3>Durum Dağılımı</H3>
                         </div>
                         <div className="flex-1 w-full relative flex items-center justify-center">
                             {applications.length === 0 ? (
@@ -151,7 +155,6 @@ const Analytics = () => {
                                 </ResponsiveContainer>
                             )}
                         </div>
-                        {/* Legend Map */}
                         <div className="w-full flex flex-col gap-2 mt-4">
                             {statusData.slice(0, 3).map((_entry, idx) => (
                                 <div key={_entry.name} className="flex justify-between items-center text-sm">
@@ -166,19 +169,77 @@ const Analytics = () => {
                     </div>
                 </Reveal>
 
-                {/* Most Frequent Platform / City */}
-                <Reveal direction="up" delay={0.4} className="lg:col-span-2">
-                    <div className="apple-card p-8 bg-[#1d1d1f] text-white">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-white/10">
-                            <div className="flex flex-col gap-2 pt-4 md:pt-0">
-                                <Caption className="text-white/50">En Etkili CV Versiyonu</Caption>
-                                <div className="text-3xl font-medium">V1 Düz</div>
-                                <div className="text-sm text-white/50 mt-auto pt-4">En çok mülakat getiren format.</div>
+                <Reveal direction="up" delay={0.4}>
+                    <div className="apple-card p-6 min-h-[400px] flex flex-col justify-center shadow-[0_4px_24px_#00000008]">
+                        <div className="flex items-center gap-3 mb-6 w-full">
+                            <AnimatedIcon type="bar" size={24} />
+                            <H3>CV Performans</H3>
+                        </div>
+                        <div className="flex-1 flex flex-col justify-center">
+                            <Caption className="text-black/50">En Etkili Versiyon</Caption>
+                            <div className="text-5xl font-medium text-black mt-1">V1 Düz</div>
+                            <div className="text-sm text-black/50 mt-2">Bu CV modeli size en fazla pozitif dönüşü sağladı.</div>
+
+                            <div className="mt-8 border-t border-black/5 pt-6">
+                                <Caption className="text-black/50 mb-4">Formata Göre Dönüş Oranları</Caption>
+                                <div className="space-y-4 w-full">
+                                    <div>
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="text-black/70">V1 Düz</span>
+                                            <span className="font-medium">%100 Test Raporu</span>
+                                        </div>
+                                        <div className="w-full bg-black/5 rounded-full h-2">
+                                            <div className="bg-[#0071e3] h-2 rounded-full" style={{ width: '100%' }}></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="text-black/70">V2 Tasarım</span>
+                                            <span className="font-medium">%62 Kapsama</span>
+                                        </div>
+                                        <div className="w-full bg-black/5 rounded-full h-2">
+                                            <div className="bg-[#34c759] h-2 rounded-full" style={{ width: '62%' }}></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex flex-col gap-2 pt-4 md:pt-0 md:pl-8">
-                                <Caption className="text-white/50">Ortalama Dönüş Süresi</Caption>
-                                <div className="text-3xl font-medium z-10">14 Gün</div>
-                                <div className="text-sm text-white/50 mt-auto pt-4">Firmaların size dönüş hızı.</div>
+                        </div>
+                    </div>
+                </Reveal>
+
+                {/* Row 3: Motivasyon Etkisi & Yıllık Trend */}
+                <Reveal direction="up" delay={0.5}>
+                    <div className="apple-card p-6 min-h-[400px] flex flex-col shadow-[0_4px_24px_#00000008]">
+                        <div className="flex items-center gap-3 mb-6 w-full">
+                            <AnimatedIcon type="bar" size={24} />
+                            <H3>Motivasyon Etkisi</H3>
+                        </div>
+                        <div className="flex-1 flex flex-col justify-center items-center text-center">
+                            <div className="text-[100px] font-medium leading-none tracking-tighter text-emerald-500">
+                                +3x
+                            </div>
+                            <div className="mt-6 text-base font-medium text-black/60 max-w-xs mx-auto">
+                                Motivasyon yazısı eklediğiniz başvurulardan olumlu dönüş alma ihtimaliniz <strong>3 kat</strong> daha fazla.
+                            </div>
+                        </div>
+                    </div>
+                </Reveal>
+
+                <Reveal direction="up" delay={0.6}>
+                    <div className="apple-card p-6 min-h-[400px] flex flex-col shadow-[0_4px_24px_#00000008]">
+                        <div className="flex items-center gap-3 mb-6 w-full">
+                            <AnimatedIcon type="area" size={24} />
+                            <H3>Yıllık Trend</H3>
+                        </div>
+                        <div className="flex-1 flex flex-col justify-center mt-4">
+                            <div className="text-2xl font-bold text-black tracking-tight mb-2">Başvurular Artışta!</div>
+                            <div className="text-base font-medium text-black/50 mb-8">Bu çeyrek bir önceki döneme göre daha verimli geçti.</div>
+
+                            <div className="flex items-end gap-2 h-32 mt-auto">
+                                {/* Synthetic mock bar generation for visual placeholder logic */}
+                                {[45, 60, 20, 90, 80, 50, 70, 40, 65, 80, 95, 100].map((h, i) => (
+                                    <div key={i} className={`flex-1 rounded-t opacity-80 ${h > 70 ? 'bg-[#0071e3]' : 'bg-[#0071e3]/20'}`} style={{ height: `${h}%` }}></div>
+                                ))}
                             </div>
                         </div>
                     </div>

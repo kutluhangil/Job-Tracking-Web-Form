@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../store/useAppStore';
 import { H2, Caption } from '../components/common/Typography';
 import { Reveal } from '../components/common/Reveal';
-import { Search, Filter, ArrowDown, ArrowUp, Download } from 'lucide-react';
+import { Search, Filter, ArrowDown, ArrowUp, Download, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -14,6 +14,7 @@ const Applications = () => {
     const [statusFilter, setStatusFilter] = useState('');
     const [sortField, setSortField] = useState<'date' | 'companyName'>('date');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [selectedApp, setSelectedApp] = useState<typeof applications[0] | null>(null);
 
     const handleSort = (field: 'date' | 'companyName') => {
         if (sortField === field) {
@@ -155,87 +156,187 @@ const Applications = () => {
             </div>
 
             <Reveal direction="up" delay={0.2}>
-                <div className="apple-card overflow-x-auto">
-                    <table className="w-full text-left text-sm text-black">
-                        <thead className="bg-[#fbfbfd] text-xs uppercase text-black/60 border-b border-black/5">
-                            <tr>
-                                <th className="px-6 py-5 font-medium">No</th>
-                                <th
-                                    className="px-6 py-5 font-medium cursor-pointer hover:text-black transition-colors"
-                                    onClick={() => handleSort('companyName')}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        Firma & Pozisyon
-                                        {sortField === 'companyName' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
-                                    </div>
-                                </th>
-                                <th
-                                    className="px-6 py-5 font-medium cursor-pointer hover:text-black transition-colors"
-                                    onClick={() => handleSort('date')}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        Tarih
-                                        {sortField === 'date' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
-                                    </div>
-                                </th>
-                                <th className="px-6 py-5 font-medium">Durum</th>
-                                <th className="px-6 py-5 font-medium">CV / Platform</th>
-                                <th className="px-6 py-5 font-medium text-right">Aksiyon</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-black/5">
-                            <AnimatePresence>
-                                {filteredApps.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center text-black/50">
-                                            Başvuru bulunamadı.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filteredApps.map((app, index) => (
-                                        <motion.tr
-                                            key={app.id}
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            transition={{ delay: index * 0.05 }}
-                                            className="hover:bg-black/[0.02] transition-colors"
-                                        >
-                                            <td className="px-6 py-5 font-medium text-black/40">#{app.no}</td>
-                                            <td className="px-6 py-5">
-                                                <div className="font-semibold text-black">{app.companyName}</div>
-                                                <div className="text-black/60 mt-0.5">{app.position}</div>
-                                            </td>
-                                            <td className="px-6 py-5 text-black/70">
-                                                {new Date(app.date).toLocaleDateString('tr-TR')}
-                                            </td>
-                                            <td className="px-6 py-5">
-                                                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium
-                          ${app.status === 'Reddedildi' ? 'bg-rose-500/10 text-rose-600' : ''}
-                          ${app.status === 'Süreçte' ? 'bg-blue-500/10 text-blue-600' : ''}
-                          ${app.status === 'Olumlu' || app.status === 'Teklif Alındı' ? 'bg-emerald-500/10 text-emerald-600' : ''}
-                          ${app.status === 'Görüşme Bekleniyor' ? 'bg-amber-500/10 text-amber-600' : ''}
-                        `}>
-                                                    {app.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-5">
-                                                <div className="text-black/80">{app.cvVersion}</div>
-                                                <div className="text-black/50 text-xs mt-0.5">{app.platform}</div>
-                                            </td>
-                                            <td className="px-6 py-5 text-right">
-                                                <button className="text-[#0071e3] hover:underline text-sm font-medium">
-                                                    Detay
-                                                </button>
-                                            </td>
-                                        </motion.tr>
-                                    ))
-                                )}
-                            </AnimatePresence>
-                        </tbody>
-                    </table>
+                <div className="flex flex-col gap-4">
+                    {/* Desktop Headers */}
+                    <div className="hidden lg:grid lg:grid-cols-11 gap-4 px-6 pb-2 text-xs font-semibold text-black/50 uppercase tracking-wider">
+                        <div className="col-span-2 cursor-pointer hover:text-black flex items-center gap-1" onClick={() => handleSort('companyName')}>
+                            Firma / Pozisyon
+                            {sortField === 'companyName' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+                        </div>
+                        <div className="col-span-2">Durum</div>
+                        <div className="col-span-1 cursor-pointer hover:text-black flex items-center gap-1" onClick={() => handleSort('date')}>
+                            Tarih
+                            {sortField === 'date' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+                        </div>
+                        <div className="col-span-1">Platform</div>
+                        <div className="col-span-1">CV</div>
+                        <div className="col-span-1">Motivasyon</div>
+                        <div className="col-span-1">Test</div>
+                        <div className="col-span-2 text-right">Aksiyon</div>
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                        <AnimatePresence>
+                            {filteredApps.length === 0 ? (
+                                <div className="text-center py-12 text-black/50 bg-white rounded-3xl border border-black/5">
+                                    Başvuru bulunamadı.
+                                </div>
+                            ) : (
+                                filteredApps.map((app, index) => (
+                                    <motion.div
+                                        key={app.id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        className="group flex flex-col lg:grid lg:grid-cols-11 gap-4 lg:items-center rounded-3xl p-6 bg-white shadow-[0_4px_24px_#0000000a] border border-black/5 hover:shadow-[0_8px_32px_#00000014] transition-all"
+                                    >
+                                        <div className="col-span-2 flex flex-col">
+                                            <div className="text-base font-bold text-black">{app.companyName}</div>
+                                            <div className="text-sm text-black/60">{app.position}</div>
+                                        </div>
+
+                                        <div className="col-span-2 flex items-center">
+                                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium
+                                                ${app.status === 'Reddedildi' ? 'bg-rose-500/10 text-rose-600' : ''}
+                                                ${app.status === 'Süreçte' ? 'bg-blue-500/10 text-blue-600' : ''}
+                                                ${app.status === 'Olumlu' || app.status === 'Teklif Alındı' ? 'bg-emerald-500/10 text-emerald-600' : ''}
+                                                ${app.status === 'Görüşme Bekleniyor' ? 'bg-amber-500/10 text-amber-600' : ''}
+                                            `}>
+                                                {app.status}
+                                            </span>
+                                        </div>
+
+                                        <div className="col-span-1 text-sm text-black/70">
+                                            {new Date(app.date).toLocaleDateString('tr-TR')}
+                                        </div>
+
+                                        <div className="col-span-1 text-sm font-medium text-black/80">
+                                            {app.platform || '-'}
+                                        </div>
+
+                                        <div className="col-span-1 text-sm text-black/80">
+                                            {app.cvVersion || '-'}
+                                        </div>
+
+                                        <div className="col-span-1 text-sm text-black/60 truncate" title={app.motivation}>
+                                            {app.motivation ? 'Eklendi' : '-'}
+                                        </div>
+
+                                        <div className="col-span-1 text-sm text-blue-600">
+                                            {app.testLink ? (
+                                                <a href={app.testLink} target="_blank" rel="noopener noreferrer" className="hover:underline" onClick={(e) => e.stopPropagation()}>
+                                                    Link
+                                                </a>
+                                            ) : (
+                                                <span className="text-black/30">-</span>
+                                            )}
+                                        </div>
+
+                                        <div className="col-span-2 flex items-center lg:justify-end gap-3 max-lg:mt-4">
+                                            {app.jobLink && (
+                                                <a href={app.jobLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-full bg-blue-50 px-4 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors">
+                                                    [ İlanı Aç ]
+                                                </a>
+                                            )}
+                                            <button
+                                                onClick={() => setSelectedApp(app)}
+                                                className="inline-flex items-center justify-center rounded-full bg-black/5 px-4 py-1.5 text-xs font-semibold text-black hover:bg-black/10 transition-colors"
+                                            >
+                                                Detaylar
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                ))
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
             </Reveal>
+
+            {/* Action Details Modal */}
+            <AnimatePresence>
+                {selectedApp && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-md p-4 sm:p-6"
+                        onClick={() => setSelectedApp(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            transition={{ type: "spring", duration: 0.5 }}
+                            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[32px] bg-white p-8 shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <button
+                                onClick={() => setSelectedApp(null)}
+                                className="absolute top-6 right-6 p-2 rounded-full bg-black/5 hover:bg-black/10 transition-colors"
+                            >
+                                <X size={20} className="text-black/70" />
+                            </button>
+
+                            <div className="mb-8">
+                                <div className="text-sm font-semibold text-blue-600 mb-2 uppercase tracking-wide">
+                                    Başvuru Detayı
+                                </div>
+                                <h3 className="text-3xl font-bold tracking-tight text-black">{selectedApp.companyName}</h3>
+                                <div className="text-lg text-black/60 mt-1">{selectedApp.position}</div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                <div>
+                                    <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">Başvuru Tarihi</div>
+                                    <div className="text-base text-black font-medium">{new Date(selectedApp.date).toLocaleDateString('tr-TR')}</div>
+                                </div>
+
+                                <div>
+                                    <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">Durum</div>
+                                    <span className="inline-flex items-center rounded-full bg-black/5 px-3 py-1 text-sm font-medium text-black/80">
+                                        {selectedApp.status}
+                                    </span>
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                    <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">Süreç Notları & Yorumlar</div>
+                                    <div className="text-base text-black/80 bg-black/5 rounded-2xl p-4 min-h-[80px]">
+                                        {selectedApp.comments || 'Henüz not eklenmemiş.'}
+                                    </div>
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                    <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">Motivasyon / Ek Notlar</div>
+                                    <div className="text-base text-black/80 bg-black/5 rounded-2xl p-4 min-h-[80px]">
+                                        {selectedApp.motivation || 'Motivasyon yazısı bulunmuyor.'}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">İK Görüşmesi</div>
+                                    <div className="text-base text-black font-medium">{selectedApp.hrInterview || '-'}</div>
+                                </div>
+
+                                <div>
+                                    <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">Teknik / Diğer Mülakat</div>
+                                    <div className="text-base text-black font-medium">{selectedApp.otherInterviews || '-'}</div>
+                                </div>
+
+                                {selectedApp.testLink && (
+                                    <div className="sm:col-span-2">
+                                        <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">Değerlendirme Testi</div>
+                                        <a href={selectedApp.testLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-blue-600 hover:underline font-medium">
+                                            Teste Git ↗
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

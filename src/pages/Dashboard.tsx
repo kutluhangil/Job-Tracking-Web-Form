@@ -1,5 +1,5 @@
 import { useAppStore } from '../store/useAppStore';
-import { H2, H3, Text, Caption } from '../components/common/Typography';
+import { H3, Text, Caption } from '../components/common/Typography';
 import { Reveal } from '../components/common/Reveal';
 import { motion } from 'framer-motion';
 
@@ -27,8 +27,10 @@ const Dashboard = () => {
             <Reveal direction="down" duration={0.6}>
                 <div className="flex items-center justify-between">
                     <div>
-                        <Caption>Genel Bakış</Caption>
-                        <H2 className="mt-1">Merhaba, {user?.name}</H2>
+                        <Caption>GENEL BAKIŞ</Caption>
+                        <h1 className="mt-1 text-[clamp(36px,5vw,42px)] font-bold tracking-tight text-[#1d1d1f]">
+                            Merhaba, {user?.name || 'Kullanıcı'}
+                        </h1>
                     </div>
                     <button
                         onClick={logout}
@@ -98,25 +100,64 @@ const Dashboard = () => {
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4">
+                        {/* Headers for Desktop */}
+                        <div className="hidden md:grid md:grid-cols-9 gap-4 px-5 pb-2 text-xs font-semibold text-black/50 uppercase tracking-wider">
+                            <div className="col-span-2">Firma / Pozisyon</div>
+                            <div className="col-span-1">Durum</div>
+                            <div className="col-span-1">Tarih</div>
+                            <div className="col-span-1">Platform</div>
+                            <div className="col-span-1">CV</div>
+                            <div className="col-span-1">Motivasyon</div>
+                            <div className="col-span-1">Test</div>
+                            <div className="col-span-1 text-right">İlan</div>
+                        </div>
+
                         {applications.slice(0, 5).map((app, i) => (
                             <motion.div
                                 key={app.id}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.3 + (i * 0.1) }}
-                                className="group flex items-center justify-between rounded-2xl p-4 hover:bg-black/5 transition-colors cursor-pointer"
+                                className="group flex flex-col md:grid md:grid-cols-9 items-start md:items-center gap-4 rounded-3xl p-5 bg-white shadow-[0_4px_24px_#0000000a] border border-black/5 transition-all cursor-pointer hover:shadow-[0_8px_32px_#00000014]"
                             >
-                                <div>
-                                    <div className="text-lg font-medium text-black">{app.companyName}</div>
-                                    <div className="text-sm text-black/50">{app.position}</div>
+                                <div className="col-span-2 flex flex-col">
+                                    <div className="text-base font-bold text-black">{app.companyName}</div>
+                                    <div className="text-sm text-black/60">{app.position}</div>
                                 </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="text-sm font-medium px-3 py-1 rounded-full bg-black/5 text-black/80">
+                                <div className="col-span-1">
+                                    <span className="text-xs font-medium px-3 py-1 rounded-full bg-black/5 text-black/80 whitespace-nowrap">
                                         {app.status}
-                                    </div>
-                                    <div className="text-sm text-black/40">
-                                        {new Date(app.date).toLocaleDateString('tr-TR')}
-                                    </div>
+                                    </span>
+                                </div>
+                                <div className="col-span-1 text-sm text-black/60">
+                                    {new Date(app.date).toLocaleDateString('tr-TR')}
+                                </div>
+                                <div className="col-span-1 text-sm text-black/60">
+                                    {app.platform || '-'}
+                                </div>
+                                <div className="col-span-1 text-sm text-black/60">
+                                    {app.cvVersion || '-'}
+                                </div>
+                                <div className="col-span-1 text-sm text-black/60 truncate" title={app.motivation}>
+                                    {app.motivation ? 'Eklendi' : '-'}
+                                </div>
+                                <div className="col-span-1 text-sm">
+                                    {app.testLink ? (
+                                        <a href={app.testLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline" onClick={(e) => e.stopPropagation()}>
+                                            Var
+                                        </a>
+                                    ) : (
+                                        <span className="text-black/30">-</span>
+                                    )}
+                                </div>
+                                <div className="col-span-1 text-sm max-md:mt-2 md:text-right">
+                                    {app.jobLink ? (
+                                        <a href={app.jobLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors" onClick={(e) => e.stopPropagation()}>
+                                            [ İlanı Aç ]
+                                        </a>
+                                    ) : (
+                                        <span className="text-black/30">-</span>
+                                    )}
                                 </div>
                             </motion.div>
                         ))}
