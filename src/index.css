@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  --color-apple-bg: #fbfbfd;
+  --color-apple-text: #1d1d1f;
+  --color-apple-gray: #86868b;
+  --color-apple-light: #f5f5f7;
+  --color-apple-border: #d2d2d7;
+  --color-apple-blue: #0071e3;
+  --color-apple-blue-hover: #0077ed;
+
+  --color-background: var(--color-apple-bg);
+  --color-foreground: var(--color-apple-text);
+
+  --radius-dock: 24px;
+}
+
+@layer base {
+  :root {
+    --background: var(--color-apple-bg);
+    --foreground: var(--color-apple-text);
+  }
+
+  body {
+    @apply bg-background text-foreground bg-[var(--color-apple-bg)] text-[var(--color-apple-text)] antialiased font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Hide scrollbar for an Apple-like smooth feel */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    background-color: var(--color-apple-bg);
+    color: var(--color-apple-text);
+  }
+
+  body::-webkit-scrollbar {
+    display: none;
+  }
+
+  ::selection {
+    @apply bg-[var(--color-apple-blue)] text-white;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .glass-dock {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0, 0, 0, 0.08)];
+  }
+
+  .apple-card {
+    @apply bg-white rounded-3xl shadow-[0_4px_24px_rgba(0, 0, 0, 0.04)] border border-[var(--color-apple-border)]/30;
+  }
+
+  /* NextStep Hero Title Gradient */
+  .animated-gradient-text {
+    background: linear-gradient(-45deg, #0071e3, #5e5ce6, #ff2d55, #0071e3);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    animation: gradientText 8s ease infinite;
+  }
+}
+
+/* Custom Scroll animations setup */
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes gradientText {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
