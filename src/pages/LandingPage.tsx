@@ -1,75 +1,82 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
 import { useLanguage } from '../lib/i18n';
 
-// ── Word Cycler with visible scramble ─────────────────────────────
-const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&';
-const rand = (arr: string) => arr[Math.floor(Math.random() * arr.length)];
+// ── Word Cycler — reliable setInterval approach ───────────────
+const CHARS = 'ABCDEFGHKLMNPRSTUVYZ0123456789#@!%&';
+const rand = () => CHARS[Math.floor(Math.random() * CHARS.length)];
 
-function useWordCycler(
-    words: string[],
-    scrambleDuration = 4000,
-    pauseDuration = 3000,
-    frameInterval = 80   // ms between character updates — lower = faster
-) {
+// Word lists outside component — stable references, never recreated
+const TR_WORDS = ['Yönet.', 'Geliştir.', 'Düzenle.', 'Başlat.', 'Planla.', 'Takip Et.', 'Güçlendir.', 'Keşfet.', 'Hedefle.', 'İlerle.'];
+const EN_WORDS = ['Career.', 'Future.', 'Journey.', 'Growth.', 'Success.', 'Goals.', 'Path.', 'Story.', 'Strategy.', 'Ambition.'];
+
+function useWordCycler(words: string[]) {
     const [display, setDisplay] = useState(words[0]);
-    const stateRef = useRef({
-        wordIndex: 0,
-        phase: 'scramble' as 'scramble' | 'pause',
-        startTime: 0,
-        lastFrameTime: 0,
-    });
-    const rafRef = useRef<number>(0);
+    const [opacity, setOpacity] = useState(1);
+    const wordsRef = useRef(words);
+    wordsRef.current = words;
 
     useEffect(() => {
-        stateRef.current = { wordIndex: 0, phase: 'scramble', startTime: 0, lastFrameTime: 0 };
+        const SCRAMBLE_MS = 1800;  // 1.8s scramble
+        const PAUSE_MS = 900;   // 0.9s hold
+        const FADE_MS = 250;   // fade-out before switch
+        const TICK_MS = 50;    // 20fps — smooth
 
-        const animate = (timestamp: number) => {
-            const s = stateRef.current;
-            if (!s.startTime) s.startTime = timestamp;
-            const elapsed = timestamp - s.startTime;
-            const target = words[s.wordIndex];
+        let wordIndex = 0;
+        let phase: 'scramble' | 'pause' = 'scramble';
+        let phaseStart = Date.now();
+        let fading = false;
 
-            if (s.phase === 'scramble') {
-                // Throttle: only update display every `frameInterval` ms
-                if (timestamp - s.lastFrameTime >= frameInterval) {
-                    s.lastFrameTime = timestamp;
-                    const progress = Math.min(elapsed / scrambleDuration, 1);
-                    // Characters resolve from LEFT → RIGHT as time passes
-                    const resolved = Math.floor(progress * target.length);
-                    setDisplay(
-                        target.split('').map((ch, i) => {
-                            if (ch === ' ') return ' ';
-                            if (i < resolved) return ch;   // locked in
-                            return rand(CHARS);             // still scrambling
-                        }).join('')
-                    );
-                }
-                if (elapsed >= scrambleDuration) {
-                    setDisplay(target);                     // snap to final
-                    s.phase = 'pause';
-                    s.startTime = timestamp;
+        const tick = () => {
+            const now = Date.now();
+            const elapsed = now - phaseStart;
+            const target = wordsRef.current[wordIndex];
+
+            if (phase === 'scramble') {
+                // Fade in during first FADE_MS
+                const fadeInProgress = Math.min(elapsed / FADE_MS, 1);
+                if (elapsed < FADE_MS) setOpacity(fadeInProgress);
+                else if (fading) { setOpacity(1); fading = false; }
+
+                const progress = Math.min(elapsed / SCRAMBLE_MS, 1);
+                const resolved = Math.floor(progress * target.length);
+                setDisplay(
+                    target.split('').map((ch, i) => {
+                        if (ch === ' ') return '\u00a0'; // non-breaking space
+                        if (i < resolved) return ch;
+                        return rand();
+                    }).join('')
+                );
+                if (elapsed >= SCRAMBLE_MS) {
+                    setDisplay(target);
+                    setOpacity(1);
+                    phase = 'pause';
+                    phaseStart = now;
                 }
             } else {
-                // During pause just hold — move to next word when done
-                if (elapsed >= pauseDuration) {
-                    s.wordIndex = (s.wordIndex + 1) % words.length;
-                    s.phase = 'scramble';
-                    s.startTime = timestamp;
-                    s.lastFrameTime = 0;
+                // Near end of pause: fade out
+                if (elapsed >= PAUSE_MS - FADE_MS && !fading) {
+                    fading = true;
+                }
+                if (fading) {
+                    const fadeProgress = Math.min((elapsed - (PAUSE_MS - FADE_MS)) / FADE_MS, 1);
+                    setOpacity(1 - fadeProgress);
+                }
+                if (elapsed >= PAUSE_MS) {
+                    wordIndex = (wordIndex + 1) % wordsRef.current.length;
+                    phase = 'scramble';
+                    phaseStart = now;
                 }
             }
-
-            rafRef.current = requestAnimationFrame(animate);
         };
 
-        rafRef.current = requestAnimationFrame(animate);
-        return () => cancelAnimationFrame(rafRef.current);
-    }, [words, scrambleDuration, pauseDuration, frameInterval]);
+        const id = setInterval(tick, TICK_MS);
+        return () => clearInterval(id);
+    }, []);
 
-    return display;
+    return { display, opacity };
 }
 
 // ── Intersection-based reveal ───────────────────────────────────────
@@ -95,6 +102,253 @@ const Reveal = ({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
     );
 };
 
+// ── FeatureShowcase: interactive stacked window cards ─────────────
+interface ShowcaseProps {
+    bone2: string; border: string; ink: string; inkFaint: string; accent: string; lang: string;
+}
+
+const SCREENS = [
+    {
+        url: 'nextstep.app/dashboard',
+        label: { tr: 'Dashboard', en: 'Dashboard' },
+        desc: { tr: 'Anlık özet, istatistikler ve son başvurular', en: 'Live stats, summary, and recent applications' },
+        offset: { x: 0, y: 0, rotate: 0 },
+        content: (border: string, inkFaint: string) => (
+            <div className="p-4" style={{ background: '#faf9f6' }}>
+                <div className="rounded-xl p-3 mb-3" style={{ background: 'linear-gradient(135deg, #f97316, #a855f7)' }}>
+                    <div className="text-[9px] text-white/60 mb-0.5">27 Şubat Cuma</div>
+                    <div className="text-sm font-bold text-white">Merhaba, Kutluhan 👋</div>
+                </div>
+                <div className="grid grid-cols-4 gap-1.5 mb-3">
+                    {[{ n: '24', l: 'Toplam', c: '#f97316' }, { n: '7', l: 'Bu Ay', c: '#a855f7' }, { n: '5', l: 'Süreçte', c: '#ec4899' }, { n: '2', l: 'Olumlu', c: '#22c55e' }].map(s => (
+                        <div key={s.l} className="rounded-xl p-2" style={{ background: '#fff', border: `1px solid ${border}` }}>
+                            <div className="text-sm font-black" style={{ color: s.c }}>{s.n}</div>
+                            <div className="text-[8px]" style={{ color: inkFaint }}>{s.l}</div>
+                        </div>
+                    ))}
+                </div>
+                {[{ c: 'Apple', s: 'Görüşme', col: '#a855f7' }, { c: 'Spotify', s: 'Süreçte', col: '#f97316' }, { c: 'Notion', s: 'Teklif', col: '#22c55e' }].map(r => (
+                    <div key={r.c} className="flex items-center justify-between py-1" style={{ borderBottom: `1px solid ${border}` }}>
+                        <span className="text-[9px] font-medium" style={{ color: '#1a1a1a' }}>{r.c}</span>
+                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: r.col + '18', color: r.col }}>{r.s}</span>
+                    </div>
+                ))}
+            </div>
+        ),
+    },
+    {
+        url: 'nextstep.app/applications',
+        label: { tr: 'Başvurular', en: 'Applications' },
+        desc: { tr: 'Tüm başvuruları listele, filtrele ve dışa aktar', en: 'List, filter and export all applications' },
+        offset: { x: 32, y: 16, rotate: 2.5 },
+        content: (border: string, inkFaint: string) => (
+            <div className="p-3" style={{ background: '#faf9f6' }}>
+                <div className="flex gap-2 mb-2">
+                    <div className="flex-1 h-6 rounded-lg" style={{ background: '#fff', border: `1px solid ${border}` }} />
+                    <div className="h-6 px-2 rounded-lg flex items-center" style={{ background: '#fff', border: `1px solid ${border}` }}>
+                        <span className="text-[8px]" style={{ color: inkFaint }}>Filtrele</span>
+                    </div>
+                </div>
+                {['Apple / iOS Dev', 'Spotify / Frontend', 'Google / PM', 'Meta / Design', 'Tesla / Backend'].map((row, i) => (
+                    <div key={row} className="flex items-center justify-between py-1.5" style={{ borderBottom: `1px solid ${border}` }}>
+                        <span className="text-[9px] font-medium" style={{ color: '#1a1a1a' }}>{row}</span>
+                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: ['#a855f718', '#f9731618', '#22c55e18', '#ec489918', '#3b82f618'][i], color: ['#a855f7', '#f97316', '#22c55e', '#ec4899', '#3b82f6'][i] }}>
+                            {['Görüşme', 'Süreçte', 'Teklif', 'Beklemede', 'Red'][i]}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        ),
+    },
+    {
+        url: 'nextstep.app/analytics',
+        label: { tr: 'Analiz', en: 'Analytics' },
+        desc: { tr: 'Platform, durum ve CV versiyon istatistikleri', en: 'Platform, status and CV version analytics' },
+        offset: { x: -28, y: 24, rotate: -2 },
+        content: (border: string, inkFaint: string) => (
+            <div className="p-4" style={{ background: '#faf9f6' }}>
+                <div className="text-[10px] font-bold mb-3" style={{ color: '#1a1a1a' }}>Platform Dağılımı</div>
+                {[{ l: 'LinkedIn', v: 72, c: '#0077b5' }, { l: 'Kariyer.net', v: 48, c: '#f97316' }, { l: 'Indeed', v: 31, c: '#2557a7' }, { l: 'Doğrudan', v: 18, c: '#a855f7' }].map(b => (
+                    <div key={b.l} className="mb-2">
+                        <div className="flex justify-between text-[8px] mb-0.5">
+                            <span style={{ color: inkFaint }}>{b.l}</span>
+                            <span style={{ color: '#1a1a1a' }}>{b.v}%</span>
+                        </div>
+                        <div className="w-full h-2 rounded-full" style={{ background: border }}>
+                            <div className="h-2 rounded-full" style={{ width: `${b.v}%`, background: b.c }} />
+                        </div>
+                    </div>
+                ))}
+                <div className="mt-3 text-[10px] font-bold mb-2" style={{ color: '#1a1a1a' }}>CV Versiyonları</div>
+                <div className="flex gap-1.5">
+                    {[{ l: 'v1', v: 8, c: '#a855f7' }, { l: 'v2', v: 14, c: '#f97316' }, { l: 'v3', v: 6, c: '#22c55e' }].map(p => (
+                        <div key={p.l} className="flex-1 rounded-xl p-2 text-center" style={{ background: '#fff', border: `1px solid ${border}` }}>
+                            <div className="text-sm font-black" style={{ color: p.c }}>{p.v}</div>
+                            <div className="text-[7px]" style={{ color: inkFaint }}>{p.l}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        ),
+    },
+    {
+        url: 'nextstep.app/add',
+        label: { tr: 'Başvuru Ekle', en: 'Add Application' },
+        desc: { tr: 'Hızlı form ile yeni başvuru kaydet', en: 'Log a new application with the quick form' },
+        offset: { x: 24, y: 32, rotate: 1.5 },
+        content: (border: string, inkFaint: string) => (
+            <div className="p-4" style={{ background: '#faf9f6' }}>
+                {[
+                    { l: 'Firma Adı', ph: 'Apple Inc.' },
+                    { l: 'Pozisyon', ph: 'Senior iOS Developer' },
+                    { l: 'İlan Linki', ph: 'linkedin.com/jobs/...' },
+                ].map(f => (
+                    <div key={f.l} className="mb-2">
+                        <div className="text-[8px] font-bold mb-0.5" style={{ color: inkFaint }}>{f.l}</div>
+                        <div className="w-full h-6 rounded-lg px-2 flex items-center" style={{ background: '#fff', border: `1px solid ${border}` }}>
+                            <span className="text-[8px]" style={{ color: '#c4bfb9' }}>{f.ph}</span>
+                        </div>
+                    </div>
+                ))}
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                    <div>
+                        <div className="text-[8px] font-bold mb-0.5" style={{ color: inkFaint }}>Tarih</div>
+                        <div className="h-6 rounded-lg" style={{ background: '#fff', border: `1px solid ${border}` }} />
+                    </div>
+                    <div>
+                        <div className="text-[8px] font-bold mb-0.5" style={{ color: inkFaint }}>Durum</div>
+                        <div className="h-6 rounded-lg" style={{ background: '#fff', border: `1px solid ${border}` }} />
+                    </div>
+                </div>
+                <button className="w-full mt-3 py-2 rounded-xl text-[9px] font-bold text-white" style={{ background: 'linear-gradient(135deg,#f97316,#a855f7)' }}>
+                    Başvuruyu Kaydet
+                </button>
+            </div>
+        ),
+    },
+    {
+        url: 'nextstep.app/cv',
+        label: { tr: 'CV Analizi', en: 'CV Analysis' },
+        desc: { tr: 'ATS skoru, bölüm analizi ve Gemini önerileri', en: 'ATS scoring, section analysis and Gemini tips' },
+        offset: { x: -16, y: 40, rotate: -1 },
+        content: (border: string, inkFaint: string) => (
+            <div className="p-4" style={{ background: '#faf9f6' }}>
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="relative w-14 h-14 flex-shrink-0">
+                        <svg viewBox="0 0 36 36" className="w-14 h-14 -rotate-90">
+                            <circle cx="18" cy="18" r="15" fill="none" stroke={border} strokeWidth="3" />
+                            <circle cx="18" cy="18" r="15" fill="none" stroke="url(#g1)" strokeWidth="3"
+                                strokeDasharray="94.2" strokeDashoffset="23.5" strokeLinecap="round" />
+                            <defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#f97316" /><stop offset="100%" stopColor="#a855f7" /></linearGradient></defs>
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center rotate-90">
+                            <span className="text-[11px] font-black" style={{ color: '#f97316' }}>75</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div className="text-[9px] font-bold" style={{ color: '#1a1a1a' }}>ATS Skoru</div>
+                        <div className="text-[8px]" style={{ color: inkFaint }}>İyi — birkaç iyileştirme önerisi var</div>
+                    </div>
+                </div>
+                {['Deneyim', 'Beceriler', 'Eğitim', 'İletişim'].map((s, i) => (
+                    <div key={s} className="flex items-center gap-2 mb-1.5">
+                        <span className="text-[8px] w-14 flex-shrink-0" style={{ color: inkFaint }}>{s}</span>
+                        <div className="flex-1 h-1.5 rounded-full" style={{ background: border }}>
+                            <div className="h-1.5 rounded-full" style={{ width: `${[90, 75, 60, 85][i]}%`, background: 'linear-gradient(90deg,#f97316,#a855f7)' }} />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        ),
+    },
+];
+
+const FeatureShowcase = React.memo(({ bone2, border, ink, inkFaint, accent, lang }: ShowcaseProps) => {
+    const [active, setActive] = useState(0);
+    const [hovered, setHovered] = useState<number | null>(null);
+    const total = SCREENS.length;
+
+    return (
+        <div className="mt-16 sm:mt-24 w-full dash-enter" style={{ maxWidth: 720, margin: '5rem auto 0' }}>
+            {/* Stacked window cards */}
+            <div className="relative" style={{ height: 420 }}>
+                {SCREENS.map((screen, idx) => {
+                    const isActive = idx === active;
+                    const isHovered = hovered === idx;
+                    // z ordering: active on top, others behind
+                    const zIndex = isActive ? 50 : isHovered ? 40 : (total - Math.abs(idx - active)) * 5;
+                    // Offset each card so they peek out
+                    const offsetX = isActive ? 0 : screen.offset.x * 0.5;
+                    const offsetY = isActive ? 0 : 16 + idx * 8;
+                    const rotate = isActive ? 0 : screen.offset.rotate;
+                    const scale = isActive ? 1 : isHovered ? 0.97 : 0.93 - idx * 0.01;
+
+                    return (
+                        <div key={screen.url}
+                            onClick={() => setActive((active + 1) % total)}
+                            onMouseEnter={() => setHovered(idx)}
+                            onMouseLeave={() => setHovered(null)}
+                            style={{
+                                position: 'absolute', inset: 0,
+                                transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotate}deg) scale(${scale})`,
+                                zIndex,
+                                cursor: 'pointer',
+                                transition: 'transform 0.45s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease, z-index 0s',
+                                borderRadius: 20,
+                                overflow: 'hidden',
+                                border: `1px solid ${isActive ? '#d0ccc6' : border}`,
+                                background: '#fff',
+                                boxShadow: isActive
+                                    ? '0 32px 80px rgba(0,0,0,0.14)'
+                                    : isHovered
+                                        ? '0 16px 48px rgba(0,0,0,0.12)'
+                                        : '0 4px 20px rgba(0,0,0,0.06)',
+                            }}>
+                            {/* Browser chrome */}
+                            <div className="flex items-center gap-1.5 px-4 py-2.5" style={{ background: '#f5f2ee', borderBottom: `1px solid ${border}` }}>
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]/70" />
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]/70" />
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]/70" />
+                                <div className="ml-2 flex-1 max-w-[180px] h-4 rounded px-2 flex items-center" style={{ background: bone2 }}>
+                                    <span className="text-[8px]" style={{ color: inkFaint }}>{screen.url}</span>
+                                </div>
+                            </div>
+                            {/* Card content */}
+                            {screen.content(border, inkFaint)}
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Label + description */}
+            <div className="mt-6 text-center">
+                <div className="flex justify-center gap-2 mb-4">
+                    {SCREENS.map((_, i) => (
+                        <button key={i} onClick={() => setActive(i)}
+                            className="rounded-full transition-all duration-300"
+                            style={{
+                                width: active === i ? 28 : 8,
+                                height: 8,
+                                background: active === i ? (accent as string) : border,
+                            }} />
+                    ))}
+                </div>
+                <div className="text-base font-bold mb-1" style={{ color: ink }}>
+                    {lang === 'tr' ? SCREENS[active].label.tr : SCREENS[active].label.en}
+                </div>
+                <p className="text-sm" style={{ color: inkFaint }}>
+                    {lang === 'tr' ? SCREENS[active].desc.tr : SCREENS[active].desc.en}
+                </p>
+                <p className="text-xs mt-2" style={{ color: inkFaint }}>
+                    {lang === 'tr' ? '← Karta tıklayarak geçiş yap →' : '← Click to cycle through screens →'}
+                </p>
+            </div>
+        </div>
+    );
+});
+FeatureShowcase.displayName = 'FeatureShowcase';
+
 // ── Main component ──────────────────────────────────────────────────
 const LandingPage = () => {
     const navigate = useNavigate();
@@ -102,11 +356,9 @@ const LandingPage = () => {
     const [activeStep, setActiveStep] = useState(0);
     const heroRef = useRef<HTMLDivElement>(null);
 
-    // Cycling words after 'Kariyerini' / 'Own Your'
-    const trWords = ['Yönet.', 'Geliştir.', 'Düzenle.', 'Başlat.', 'Planla.', 'Takip Et.', 'Güçlendir.', 'Keşfet.', 'Hedefle.', 'İlerle.'];
-    const enWords = ['Career.', 'Future.', 'Journey.', 'Growth.', 'Success.', 'Goals.', 'Path.', 'Story.', 'Strategy.', 'Ambition.'];
-    const wordList = lang === 'tr' ? trWords : enWords;
-    const scrambledText = useWordCycler(wordList, 4000, 3000, 80);
+    // Cycling words — lists are defined outside component (stable references)
+    const wordList = lang === 'tr' ? TR_WORDS : EN_WORDS;
+    const { display: scrambledText, opacity: scrambleOpacity } = useWordCycler(wordList);
     const scrambleLine1 = lang === 'tr' ? 'Kariyerini' : 'Own Your';
 
     const steps = lang === 'tr'
@@ -193,18 +445,25 @@ const LandingPage = () => {
                         </h1>
                     </motion.div>
 
-                    {/* Headline line 2 — scramble animation */}
+                    {/* Headline line 2 — scramble with fade */}
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.35 }}>
-                        <h1 className="font-black tracking-[-0.04em] leading-[0.92] mb-6 sm:mb-8"
+                        <h1
                             style={{
                                 fontSize: 'clamp(52px, 10vw, 112px)',
-                                background: accent,
+                                fontWeight: 900,
+                                letterSpacing: '-0.04em',
+                                lineHeight: 0.92,
+                                marginBottom: 'clamp(24px, 3vw, 32px)',
+                                background: 'linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%)',
                                 WebkitBackgroundClip: 'text',
                                 WebkitTextFillColor: 'transparent',
                                 backgroundClip: 'text',
-                                fontVariantNumeric: 'tabular-nums',
                                 display: 'block',
-                                minWidth: '4ch',
+                                // 🔒 Prevent layout reflow: lock dimensions to widest word
+                                whiteSpace: 'nowrap',
+                                minWidth: '10ch',
+                                opacity: scrambleOpacity,
+                                transition: 'opacity 0.25s ease',
                             }}>
                             {scrambledText}
                         </h1>
@@ -232,61 +491,8 @@ const LandingPage = () => {
                         </button>
                     </motion.div>
 
-                    {/* Dashboard preview card */}
-                    <motion.div initial={{ opacity: 0, y: 48, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{ duration: 1.0, delay: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        className="mt-16 sm:mt-20 w-full max-w-[800px] rounded-[24px] overflow-hidden"
-                        style={{ border: `1px solid ${border}`, background: '#fff', boxShadow: '0 24px 80px rgba(0,0,0,0.08)' }}>
-                        {/* Browser bar */}
-                        <div className="flex items-center gap-2 px-4 sm:px-5 py-3" style={{ background: '#f5f2ee', borderBottom: `1px solid ${border}` }}>
-                            <div className="w-3 h-3 rounded-full bg-[#ff5f57]/70" />
-                            <div className="w-3 h-3 rounded-full bg-[#febc2e]/70" />
-                            <div className="w-3 h-3 rounded-full bg-[#28c840]/70" />
-                            <div className="ml-3 flex-1 max-w-[200px] h-5 rounded-lg px-3 flex items-center" style={{ background: bone2 }}>
-                                <span className="text-[10px] font-medium" style={{ color: inkFaint }}>nextstep.app/dashboard</span>
-                            </div>
-                        </div>
-                        {/* Dashboard content */}
-                        <div className="p-4 sm:p-6" style={{ background: '#faf9f6' }}>
-                            {/* Gradient greeting */}
-                            <div className="rounded-2xl p-4 sm:p-5 mb-4" style={{ background: accent }}>
-                                <div className="text-[10px] font-bold tracking-widest text-white/60 mb-1">{new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
-                                <div className="text-xl font-extrabold text-white">Merhaba, Kutluhan 👋</div>
-                            </div>
-                            {/* Stat cards */}
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
-                                {[
-                                    { n: '24', l: 'Toplam', c: '#f97316' },
-                                    { n: '7', l: 'Bu Ay', c: '#a855f7' },
-                                    { n: '5', l: 'Süreçte', c: '#ec4899' },
-                                    { n: '2', l: 'Olumlu', c: '#22c55e' },
-                                ].map(s => (
-                                    <div key={s.l} className="rounded-2xl p-3 sm:p-4" style={{ background: '#fff', border: `1px solid ${border}` }}>
-                                        <div className="text-lg sm:text-2xl font-black" style={{ color: s.c }}>{s.n}</div>
-                                        <div className="text-[10px] font-medium mt-0.5" style={{ color: inkFaint }}>{s.l}</div>
-                                    </div>
-                                ))}
-                            </div>
-                            {/* Recent row */}
-                            <div className="rounded-2xl p-3 sm:p-4" style={{ background: '#fff', border: `1px solid ${border}` }}>
-                                <div className="text-xs font-bold mb-3" style={{ color: ink }}>Son Hareketler</div>
-                                {[
-                                    { c: 'Apple', p: 'iOS Developer', s: 'Görüşme', col: '#a855f7' },
-                                    { c: 'Spotify', p: 'Frontend Eng.', s: 'Süreçte', col: '#f97316' },
-                                    { c: 'Notion', p: 'Product Design', s: 'Teklif', col: '#22c55e' },
-                                ].map(r => (
-                                    <div key={r.c} className="flex items-center gap-3 py-1.5" style={{ borderBottom: `1px solid ${border}` }}>
-                                        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: r.col + '18', color: r.col }}>{r.c[0]}</div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="text-xs font-semibold truncate" style={{ color: ink }}>{r.c}</div>
-                                            <div className="text-[10px] truncate" style={{ color: inkFaint }}>{r.p}</div>
-                                        </div>
-                                        <span className="text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0" style={{ background: r.col + '18', color: r.col }}>{r.s}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </motion.div>
+                    {/* ── INTERACTIVE FEATURE SHOWCASE ── */}
+                    <FeatureShowcase bone2={bone2} border={border} ink={ink} inkFaint={inkFaint} accent={accent} lang={lang} />
                 </div>
             </section>
 

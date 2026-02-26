@@ -189,3 +189,20 @@ html {
     background-position: 0% 50%;
   }
 }
+
+/* Dashboard mockup entrance — runs once, CSS-driven, immune to React re-renders */
+@keyframes dashEnter {
+  from {
+    opacity: 0;
+    transform: translateY(48px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dash-enter {
+  animation: dashEnter 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.7s both;
+}

@@ -40,7 +40,7 @@ export const Navbar = () => {
             >
                 <div className="max-w-[1200px] mx-auto px-4 sm:px-6 flex items-center justify-between gap-4">
                     <Link to="/" className="text-xl font-bold tracking-tighter text-black flex items-center gap-[10px] group flex-shrink-0">
-                        <img src={NextLogo} alt="NextStep Logo" className="h-10 sm:h-12 transition-transform duration-300 group-hover:scale-105" />
+                        <img src={NextLogo} alt="NextStep Logo" className="h-16 sm:h-20 transition-transform duration-300 group-hover:scale-105" />
                         <span className="hidden sm:inline text-xl font-bold">NextStep</span>
                     </Link>
 
