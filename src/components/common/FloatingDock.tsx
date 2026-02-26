@@ -1,32 +1,29 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
-import {
-    Home,
-    PlusCircle,
-    List,
-    PieChart,
-    Settings
-} from 'lucide-react';
-
-const DOCK_ITEMS = [
-    { id: 'home', label: 'Home', icon: Home, path: '/' },
-    { id: 'add', label: 'Add', icon: PlusCircle, path: '/add' },
-    { id: 'list', label: 'Applications', icon: List, path: '/applications' },
-    { id: 'analytics', label: 'Analytics', icon: PieChart, path: '/analytics' },
-    { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
-];
+import { Home, PlusCircle, List, PieChart, Settings, FileText } from 'lucide-react';
+import { useLanguage } from '../../lib/i18n';
 
 export function FloatingDock() {
     const [hovered, setHovered] = useState<string | null>(null);
     const location = useLocation();
+    const { t } = useLanguage();
+
+    const DOCK_ITEMS = [
+        { id: 'home', label: t('nav.dashboard'), icon: Home, path: '/dashboard' },
+        { id: 'add', label: t('nav.add'), icon: PlusCircle, path: '/add' },
+        { id: 'list', label: t('nav.applications'), icon: List, path: '/applications' },
+        { id: 'analytics', label: t('nav.analytics'), icon: PieChart, path: '/analytics' },
+        { id: 'cv', label: t('nav.cv'), icon: FileText, path: '/cv' },
+        { id: 'settings', label: t('nav.settings'), icon: Settings, path: '/settings' },
+    ];
 
     return (
         <motion.nav
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ type: 'spring', bounce: 0, duration: 0.8, delay: 0.2 }}
-            className="glass-dock flex items-center gap-2 rounded-full px-4 py-3"
+            className="glass-dock flex items-center gap-1 rounded-full px-3 py-2.5 sm:gap-2 sm:px-4 sm:py-3"
         >
             {DOCK_ITEMS.map((item) => {
                 const Icon = item.icon;
@@ -38,10 +35,10 @@ export function FloatingDock() {
                         to={item.path}
                         onMouseEnter={() => setHovered(item.id)}
                         onMouseLeave={() => setHovered(null)}
-                        className="group relative flex items-center justify-center rounded-full p-3 transition-colors duration-200 hover:bg-black/5"
+                        className="group relative flex items-center justify-center rounded-full p-2.5 sm:p-3 transition-colors duration-200 hover:bg-black/5 min-w-[44px] min-h-[44px]"
                         aria-label={item.label}
                     >
-                        {/* Active Indicator Dot */}
+                        {/* Active Indicator */}
                         {isActive && (
                             <motion.div
                                 layoutId="active-indicator"
@@ -58,7 +55,7 @@ export function FloatingDock() {
                                     animate={{ opacity: 1, y: -45, scale: 1 }}
                                     exit={{ opacity: 0, y: 10, scale: 0.9 }}
                                     transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-                                    className="absolute -top-1 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-black/80 px-3 py-1.5 text-xs font-medium text-white shadow-xl backdrop-blur-md whitespace-nowrap"
+                                    className="absolute -top-1 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-black/80 px-3 py-1.5 text-xs font-medium text-white shadow-xl whitespace-nowrap pointer-events-none"
                                 >
                                     {item.label}
                                 </motion.div>
@@ -73,7 +70,7 @@ export function FloatingDock() {
                             transition={{ type: 'spring', bounce: 0.4, duration: 0.5 }}
                         >
                             <Icon
-                                size={22}
+                                size={21}
                                 className={`transition-colors duration-300 ${isActive ? 'text-black' : 'text-gray-500 group-hover:text-black/80'}`}
                                 strokeWidth={isActive ? 2.5 : 2}
                             />
@@ -84,5 +81,3 @@ export function FloatingDock() {
         </motion.nav>
     );
 }
-
-

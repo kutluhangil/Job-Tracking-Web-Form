@@ -1,10 +1,79 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
+import { useLanguage } from '../lib/i18n';
 
-// ── Scroll-reveal hook ──────────────────────────────────────────────
-const useInView = (threshold = 0.2) => {
+// ── Word Cycler with visible scramble ─────────────────────────────
+const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&';
+const rand = (arr: string) => arr[Math.floor(Math.random() * arr.length)];
+
+function useWordCycler(
+    words: string[],
+    scrambleDuration = 4000,
+    pauseDuration = 3000,
+    frameInterval = 80   // ms between character updates — lower = faster
+) {
+    const [display, setDisplay] = useState(words[0]);
+    const stateRef = useRef({
+        wordIndex: 0,
+        phase: 'scramble' as 'scramble' | 'pause',
+        startTime: 0,
+        lastFrameTime: 0,
+    });
+    const rafRef = useRef<number>(0);
+
+    useEffect(() => {
+        stateRef.current = { wordIndex: 0, phase: 'scramble', startTime: 0, lastFrameTime: 0 };
+
+        const animate = (timestamp: number) => {
+            const s = stateRef.current;
+            if (!s.startTime) s.startTime = timestamp;
+            const elapsed = timestamp - s.startTime;
+            const target = words[s.wordIndex];
+
+            if (s.phase === 'scramble') {
+                // Throttle: only update display every `frameInterval` ms
+                if (timestamp - s.lastFrameTime >= frameInterval) {
+                    s.lastFrameTime = timestamp;
+                    const progress = Math.min(elapsed / scrambleDuration, 1);
+                    // Characters resolve from LEFT → RIGHT as time passes
+                    const resolved = Math.floor(progress * target.length);
+                    setDisplay(
+                        target.split('').map((ch, i) => {
+                            if (ch === ' ') return ' ';
+                            if (i < resolved) return ch;   // locked in
+                            return rand(CHARS);             // still scrambling
+                        }).join('')
+                    );
+                }
+                if (elapsed >= scrambleDuration) {
+                    setDisplay(target);                     // snap to final
+                    s.phase = 'pause';
+                    s.startTime = timestamp;
+                }
+            } else {
+                // During pause just hold — move to next word when done
+                if (elapsed >= pauseDuration) {
+                    s.wordIndex = (s.wordIndex + 1) % words.length;
+                    s.phase = 'scramble';
+                    s.startTime = timestamp;
+                    s.lastFrameTime = 0;
+                }
+            }
+
+            rafRef.current = requestAnimationFrame(animate);
+        };
+
+        rafRef.current = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(rafRef.current);
+    }, [words, scrambleDuration, pauseDuration, frameInterval]);
+
+    return display;
+}
+
+// ── Intersection-based reveal ───────────────────────────────────────
+const useInView = (threshold = 0.15) => {
     const ref = useRef<HTMLDivElement>(null);
     const [inView, setInView] = useState(false);
     useEffect(() => {
@@ -16,263 +85,231 @@ const useInView = (threshold = 0.2) => {
 };
 
 const Reveal = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
-    const { ref, inView } = useInView(0.15);
+    const { ref, inView } = useInView();
     return (
-        <motion.div
-            ref={ref}
-            initial={{ opacity: 0, y: 32 }}
+        <motion.div ref={ref} initial={{ opacity: 0, y: 32 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.65, delay, ease: 'easeOut' }}
-        >
+            transition={{ duration: 0.7, delay, ease: [0.25, 0.46, 0.45, 0.94] }}>
             {children}
         </motion.div>
     );
 };
 
-// ── Feature card data ──────────────────────────────────────────────
-const features = [
-    {
-        emoji: '📊',
-        title: 'Akıllı Analiz',
-        description: 'Her başvurunun sizi finale ne kadar yaklaştırdığını anlayın. CV versiyonları, mülakat oranları ve platform başarısı tek ekranda.',
-        color: 'from-indigo-50 to-blue-50',
-        accent: 'text-indigo-600',
-        border: 'border-indigo-100',
-    },
-    {
-        emoji: '⚡',
-        title: 'Sıfır Karmaşa',
-        description: 'Excel tablolarına veda edin. Hızlı kayıt formu, tek tıkla iş ilanına ulaşım, tüm geçmişiniz bir arada.',
-        color: 'from-amber-50 to-orange-50',
-        accent: 'text-amber-600',
-        border: 'border-amber-100',
-    },
-    {
-        emoji: '🎯',
-        title: 'Motivasyon Takibi',
-        description: 'Hangi motivasyon mektuplarının işe yaradığını ölçün. Sistematik verilerle bir sonraki başvurunuzu güçlendirin.',
-        color: 'from-emerald-50 to-teal-50',
-        accent: 'text-emerald-600',
-        border: 'border-emerald-100',
-    },
-    {
-        emoji: '📈',
-        title: 'Platform Karşılaştırması',
-        description: 'LinkedIn, Kariyer.net veya doğrudan başvuru — hangisi daha çok dönüş getiriyor? Veriler yanıtlıyor.',
-        color: 'from-pink-50 to-rose-50',
-        accent: 'text-rose-600',
-        border: 'border-rose-100',
-    },
-    {
-        emoji: '🔒',
-        title: 'Gizlilik Önce',
-        description: 'Tüm verileriniz yalnızca sizin tarayıcınızda saklanır. Sunucuya gönderilmez. Tamamen sizin.',
-        color: 'from-sky-50 to-cyan-50',
-        accent: 'text-sky-600',
-        border: 'border-sky-100',
-    },
-    {
-        emoji: '📥',
-        title: 'Dışa Aktarma',
-        description: 'JSON veya Excel olarak tüm geçmişinizi indirin. Kariyer danışmanınıza kolayca gönderin.',
-        color: 'from-violet-50 to-indigo-50',
-        accent: 'text-violet-600',
-        border: 'border-violet-100',
-    },
-];
-
-const stats = [
-    { value: '∞', label: 'Başvuru takip', desc: 'Sınırsız' },
-    { value: '6', label: 'Analiz widgetı', desc: 'Dashboard\'da' },
-    { value: '0', label: 'Sunucu', desc: 'Bulut yok, yerel' },
-    { value: '100%', label: 'Ücretsiz', desc: 'Her zaman' },
-];
-
-const howItWorks = [
-    { step: '01', title: 'Kayıt Ol', desc: 'Saniyeler içinde hesap oluşturun. Kart bilgisi gerekmez.' },
-    { step: '02', title: 'Başvuru Ekle', desc: 'Firma, pozisyon, tarih ve platform bilgilerini girin.' },
-    { step: '03', title: 'Takip Et', desc: 'Dashboard\'dan anlık durum, analiz ve önerilerle süreci yönetin.' },
-    { step: '04', title: 'Geliş', desc: 'Hangi strateji işe yarıyor? Veriler sizi rehberliğinde kariyer hedefine ulaşın.' },
-];
-
-// ── Main Component ─────────────────────────────────────────────────
+// ── Main component ──────────────────────────────────────────────────
 const LandingPage = () => {
     const navigate = useNavigate();
-    const heroRef = useRef<HTMLDivElement>(null);
-    const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
-    const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '20%']);
-    const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+    const { t, lang } = useLanguage();
     const [activeStep, setActiveStep] = useState(0);
+    const heroRef = useRef<HTMLDivElement>(null);
+
+    // Cycling words after 'Kariyerini' / 'Own Your'
+    const trWords = ['Yönet.', 'Geliştir.', 'Düzenle.', 'Başlat.', 'Planla.', 'Takip Et.', 'Güçlendir.', 'Keşfet.', 'Hedefle.', 'İlerle.'];
+    const enWords = ['Career.', 'Future.', 'Journey.', 'Growth.', 'Success.', 'Goals.', 'Path.', 'Story.', 'Strategy.', 'Ambition.'];
+    const wordList = lang === 'tr' ? trWords : enWords;
+    const scrambledText = useWordCycler(wordList, 4000, 3000, 80);
+    const scrambleLine1 = lang === 'tr' ? 'Kariyerini' : 'Own Your';
+
+    const steps = lang === 'tr'
+        ? [
+            { step: '01', title: 'Kayıt Ol', desc: 'Saniyeler içinde ücretsiz hesap oluşturun.' },
+            { step: '02', title: 'Başvuru Ekle', desc: 'Firma, pozisyon, tarih ve platform bilgilerini girin.' },
+            { step: '03', title: 'Takip Et', desc: 'Dashboard ile anlık durum ve analizleri görün.' },
+            { step: '04', title: 'Geliş', desc: 'Verilerle hangi stratejinin işe yaradığını öğrenin.' },
+        ]
+        : [
+            { step: '01', title: 'Sign Up', desc: 'Create a free account in seconds.' },
+            { step: '02', title: 'Log Applications', desc: 'Enter company, role, date and platform.' },
+            { step: '03', title: 'Track Progress', desc: 'See real-time status from your dashboard.' },
+            { step: '04', title: 'Improve', desc: 'Use data to figure out what actually works.' },
+        ];
+
+    const feats = lang === 'tr'
+        ? [
+            { e: '📊', t: 'Akıllı Analiz', d: 'CV versiyonları, mülakat oranları ve platform başarısı tek ekranda.' },
+            { e: '⚡', t: 'Sıfır Karmaşa', d: 'Excel tablolarına veda edin. Hızlı kayıt, tüm geçmişiniz bir arada.' },
+            { e: '🎯', t: 'Motivasyon Takibi', d: 'Hangi yazıların işe yaradığını ölçün.' },
+            { e: '📈', t: 'Platform Karşılaştırması', d: 'Hangi platform daha çok dönüş getiriyor?' },
+            { e: '🔒', t: 'Gizlilik Önce', d: 'Verileriniz yalnızca sizin hesabınızda.' },
+            { e: '📥', t: 'Dışa Aktarma', d: 'Excel ve PDF olarak tüm geçmişi indirin.' },
+        ]
+        : [
+            { e: '📊', t: 'Smart Analytics', d: 'CV versions, interview rates, platform success in one view.' },
+            { e: '⚡', t: 'Zero Chaos', d: 'Goodbye spreadsheets. Quick log, full history in one place.' },
+            { e: '🎯', t: 'Motivation Tracking', d: 'Measure which cover letters actually work.' },
+            { e: '📈', t: 'Platform Comparison', d: 'Which platform drives more responses?' },
+            { e: '🔒', t: 'Privacy First', d: 'Data stored in your account only.' },
+            { e: '📥', t: 'Export', d: 'Download full history as Excel or PDF.' },
+        ];
 
     useEffect(() => {
-        const timer = setInterval(() => setActiveStep(s => (s + 1) % howItWorks.length), 2800);
-        return () => clearInterval(timer);
+        const t = setInterval(() => setActiveStep(s => (s + 1) % 4), 3000);
+        return () => clearInterval(t);
     }, []);
 
+    // ── Tokens ──────────────────────────────────────────────────────
+    const bone = '#faf9f6';
+    const bone2 = '#f0ede8';
+    const border = '#e2ded8';
+    const ink = '#1a1a1a';
+    const inkMid = '#6b6560';
+    const inkFaint = '#a8a39d';
+    const accent = 'linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%)';
+
     return (
-        <div className="relative min-h-screen w-full bg-[#f8f8fa] text-[#1d1d1f] selection:bg-indigo-200 selection:text-indigo-900 overflow-x-hidden">
+        <div className="relative min-h-screen w-full overflow-x-hidden" style={{
+            background: bone,
+            color: ink,
+            fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif',
+        }}>
             <Navbar />
 
-            {/* ══════════════════════════════════════════════════════
-                HERO — Apple-style full-viewport, parallax
-            ══════════════════════════════════════════════════════ */}
-            <section ref={heroRef} className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden px-6 text-center">
-                {/* Soft gradient aura */}
-                <div className="pointer-events-none absolute inset-0 z-0">
-                    <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-30" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)' }} />
-                    <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] rounded-full opacity-20" style={{ background: 'radial-gradient(circle, rgba(236,72,153,0.12) 0%, transparent 70%)' }} />
-                    <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] rounded-full opacity-20" style={{ background: 'radial-gradient(circle, rgba(20,184,166,0.12) 0%, transparent 70%)' }} />
-                </div>
+            {/* ── HERO ──────────────────────────────────────────── */}
+            <section ref={heroRef} className="relative min-h-[100dvh] flex flex-col items-center justify-center text-center px-5 overflow-hidden">
+                {/* Subtle radial on bone */}
+                <div className="pointer-events-none absolute inset-0"
+                    style={{ background: `radial-gradient(ellipse 70% 50% at 50% 40%, rgba(249,115,22,0.06) 0%, transparent 70%)` }} />
 
-                <motion.div style={{ y: heroY, opacity: heroOpacity }} className="relative z-10 flex flex-col items-center max-w-[900px] pt-24">
-                    {/* Eyebrow badge */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.6, ease: 'easeOut' }}
-                        className="mb-8 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-4 py-2 text-xs font-bold text-indigo-600 tracking-wide"
-                    >
-                        <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                        Kariyer Takip Platformu
+                <div className="relative z-10 max-w-[960px] pt-32 pb-16 flex flex-col items-center">
+                    {/* Badge */}
+                    <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+                        className="mb-8 inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold tracking-widest uppercase"
+                        style={{ background: bone2, border: `1px solid ${border}`, color: inkMid }}>
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#f97316' }} />
+                        {t('landing.badge')}
                     </motion.div>
 
-                    {/* Main heading */}
-                    <motion.h1
-                        initial={{ opacity: 0, y: 24 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.15, ease: 'easeOut' }}
-                        className="text-[clamp(48px,8vw,96px)] font-extrabold leading-[1.0] tracking-[-0.03em] text-[#1d1d1f] mb-6"
-                    >
-                        Geleceğini<br />
-                        <span className="bg-gradient-to-r from-indigo-500 via-blue-500 to-teal-400 bg-clip-text text-transparent" style={{ backgroundSize: '200% auto', animation: 'gradientFlow 4s ease infinite' }}>
-                            Yönet.
-                        </span>
-                    </motion.h1>
-
-                    {/* Sub-heading */}
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
-                        className="max-w-2xl text-[clamp(18px,2.5vw,26px)] leading-relaxed text-black/50 font-medium mb-12"
-                    >
-                        İş başvurularınızı takip edin, analiz edin ve stratejinizi verilerle geliştirin.
+                    {/* Subtitle above */}
+                    <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}
+                        className="text-sm sm:text-base font-semibold mb-4 tracking-wide"
+                        style={{ color: inkMid }}>
+                        {lang === 'tr' ? 'İş Başvuru Takip Platformu' : 'Job Application Tracker'}
                     </motion.p>
 
-                    {/* CTA buttons */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.45, ease: 'easeOut' }}
-                        className="flex flex-col sm:flex-row items-center gap-4"
-                    >
-                        <button
-                            onClick={() => navigate('/login')}
-                            className="rounded-full bg-[#1d1d1f] px-8 py-4 text-base font-bold text-white transition-all hover:bg-black hover:scale-[1.03] hover:shadow-[0_12px_32px_rgba(0,0,0,0.2)] relative overflow-hidden group"
-                        >
-                            <span className="relative z-10">Ücretsiz Başla</span>
-                            <span className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    {/* Headline line 1 — static */}
+                    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.15 }}>
+                        <h1 className="font-black tracking-[-0.04em] leading-[0.92]"
+                            style={{ fontSize: 'clamp(52px, 10vw, 112px)', color: ink }}>
+                            {scrambleLine1}
+                        </h1>
+                    </motion.div>
+
+                    {/* Headline line 2 — scramble animation */}
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.35 }}>
+                        <h1 className="font-black tracking-[-0.04em] leading-[0.92] mb-6 sm:mb-8"
+                            style={{
+                                fontSize: 'clamp(52px, 10vw, 112px)',
+                                background: accent,
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                                fontVariantNumeric: 'tabular-nums',
+                                display: 'block',
+                                minWidth: '4ch',
+                            }}>
+                            {scrambledText}
+                        </h1>
+                    </motion.div>
+
+                    {/* Sub */}
+                    <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.4 }}
+                        className="max-w-lg text-base sm:text-lg leading-relaxed font-medium mb-10 sm:mb-14"
+                        style={{ color: inkMid }}>
+                        {t('landing.sub')}
+                    </motion.p>
+
+                    {/* CTAs */}
+                    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.55 }}
+                        className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                        <button onClick={() => navigate('/login')}
+                            className="w-full sm:w-auto rounded-full px-10 py-4 text-base font-bold text-white transition-all hover:scale-[1.03] hover:shadow-[0_8px_32px_rgba(249,115,22,0.3)]"
+                            style={{ background: accent }}>
+                            {t('landing.cta')}
                         </button>
-                        <button
-                            onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                            className="rounded-full border border-black/15 bg-white px-8 py-4 text-base font-semibold text-black/70 transition-all hover:border-black/30 hover:bg-black/5 hover:scale-[1.01]"
-                        >
-                            Nasıl Çalışır? ↓
+                        <button onClick={() => document.getElementById('how')?.scrollIntoView({ behavior: 'smooth' })}
+                            className="w-full sm:w-auto rounded-full px-10 py-4 text-base font-semibold transition-all hover:bg-black/5"
+                            style={{ border: `1.5px solid ${border}`, color: inkMid }}>
+                            {t('landing.howBtn')} ↓
                         </button>
                     </motion.div>
 
-                    {/* App preview / dashboard mockup */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 48, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{ duration: 1, delay: 0.65, ease: 'easeOut' }}
-                        className="mt-20 w-full max-w-[900px] rounded-[28px] bg-white border border-black/8 shadow-[0_32px_80px_rgba(0,0,0,0.12)] overflow-hidden"
-                    >
-                        {/* Browser chrome */}
-                        <div className="flex items-center gap-2 px-5 py-3.5 bg-[#f5f5f7] border-b border-black/5">
-                            <div className="w-3 h-3 rounded-full bg-rose-400/70" />
-                            <div className="w-3 h-3 rounded-full bg-amber-400/70" />
-                            <div className="w-3 h-3 rounded-full bg-emerald-400/70" />
-                            <div className="mx-4 flex-1 max-w-[280px] h-6 rounded-lg bg-black/5 flex items-center px-3">
-                                <span className="text-[10px] text-black/30 font-medium">nextstep.app/dashboard</span>
+                    {/* Dashboard preview card */}
+                    <motion.div initial={{ opacity: 0, y: 48, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ duration: 1.0, delay: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+                        className="mt-16 sm:mt-20 w-full max-w-[800px] rounded-[24px] overflow-hidden"
+                        style={{ border: `1px solid ${border}`, background: '#fff', boxShadow: '0 24px 80px rgba(0,0,0,0.08)' }}>
+                        {/* Browser bar */}
+                        <div className="flex items-center gap-2 px-4 sm:px-5 py-3" style={{ background: '#f5f2ee', borderBottom: `1px solid ${border}` }}>
+                            <div className="w-3 h-3 rounded-full bg-[#ff5f57]/70" />
+                            <div className="w-3 h-3 rounded-full bg-[#febc2e]/70" />
+                            <div className="w-3 h-3 rounded-full bg-[#28c840]/70" />
+                            <div className="ml-3 flex-1 max-w-[200px] h-5 rounded-lg px-3 flex items-center" style={{ background: bone2 }}>
+                                <span className="text-[10px] font-medium" style={{ color: inkFaint }}>nextstep.app/dashboard</span>
                             </div>
                         </div>
-                        {/* Dashboard UI mockup */}
-                        <div className="p-6 bg-[#f8f8fa]">
-                            <div className="flex items-center justify-between mb-5">
-                                <div>
-                                    <div className="text-[10px] font-bold uppercase tracking-widest text-black/30 mb-1">GENEL BAKIŞ</div>
-                                    <div className="text-2xl font-bold text-[#1d1d1f]">Merhaba, Kutluhan 👋</div>
-                                </div>
-                                <div className="w-20 h-8 rounded-full bg-black/5 animate-pulse" />
+                        {/* Dashboard content */}
+                        <div className="p-4 sm:p-6" style={{ background: '#faf9f6' }}>
+                            {/* Gradient greeting */}
+                            <div className="rounded-2xl p-4 sm:p-5 mb-4" style={{ background: accent }}>
+                                <div className="text-[10px] font-bold tracking-widest text-white/60 mb-1">{new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                                <div className="text-xl font-extrabold text-white">Merhaba, Kutluhan 👋</div>
                             </div>
-                            <div className="grid grid-cols-4 gap-3 mb-5">
+                            {/* Stat cards */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
                                 {[
-                                    { n: '24', l: 'Toplam', c: 'from-indigo-500 to-blue-600' },
-                                    { n: '7', l: 'Bu Ay', c: 'from-sky-400 to-cyan-600' },
-                                    { n: '5', l: 'Süreçte', c: 'from-amber-400 to-orange-500' },
-                                    { n: '2', l: 'Olumlu', c: 'from-emerald-400 to-teal-600' },
+                                    { n: '24', l: 'Toplam', c: '#f97316' },
+                                    { n: '7', l: 'Bu Ay', c: '#a855f7' },
+                                    { n: '5', l: 'Süreçte', c: '#ec4899' },
+                                    { n: '2', l: 'Olumlu', c: '#22c55e' },
                                 ].map(s => (
-                                    <div key={s.l} className="bg-white rounded-2xl p-4 border border-black/5 shadow-sm">
-                                        <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${s.c} flex items-center justify-center text-white text-xs font-bold mb-2`}>{s.n}</div>
-                                        <div className="text-xl font-bold text-[#1d1d1f]">{s.n}</div>
-                                        <div className="text-[10px] font-medium text-black/40 mt-0.5">{s.l}</div>
+                                    <div key={s.l} className="rounded-2xl p-3 sm:p-4" style={{ background: '#fff', border: `1px solid ${border}` }}>
+                                        <div className="text-lg sm:text-2xl font-black" style={{ color: s.c }}>{s.n}</div>
+                                        <div className="text-[10px] font-medium mt-0.5" style={{ color: inkFaint }}>{s.l}</div>
                                     </div>
                                 ))}
                             </div>
-                            <div className="bg-white rounded-2xl border border-black/5 shadow-sm p-4">
-                                <div className="text-sm font-bold text-[#1d1d1f] mb-3">Son Hareketler</div>
-                                <div className="space-y-2">
-                                    {[
-                                        { co: 'Apple', pos: 'iOS Developer', s: 'Görüşme', c: 'bg-sky-50 text-sky-700 border-sky-100' },
-                                        { co: 'Spotify', pos: 'Frontend Engineer', s: 'Süreçte', c: 'bg-blue-50 text-blue-700 border-blue-100' },
-                                        { co: 'Notion', pos: 'Product Design', s: 'Teklif', c: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
-                                    ].map(r => (
-                                        <div key={r.co} className="flex items-center gap-3 py-2 border-b border-black/5 last:border-0">
-                                            <div className="w-7 h-7 rounded-lg bg-black/5 flex-shrink-0 flex items-center justify-center text-xs font-bold text-black/40">{r.co[0]}</div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="font-semibold text-xs text-[#1d1d1f]">{r.co}</div>
-                                                <div className="text-[10px] text-black/40">{r.pos}</div>
-                                            </div>
-                                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${r.c}`}>{r.s}</span>
+                            {/* Recent row */}
+                            <div className="rounded-2xl p-3 sm:p-4" style={{ background: '#fff', border: `1px solid ${border}` }}>
+                                <div className="text-xs font-bold mb-3" style={{ color: ink }}>Son Hareketler</div>
+                                {[
+                                    { c: 'Apple', p: 'iOS Developer', s: 'Görüşme', col: '#a855f7' },
+                                    { c: 'Spotify', p: 'Frontend Eng.', s: 'Süreçte', col: '#f97316' },
+                                    { c: 'Notion', p: 'Product Design', s: 'Teklif', col: '#22c55e' },
+                                ].map(r => (
+                                    <div key={r.c} className="flex items-center gap-3 py-1.5" style={{ borderBottom: `1px solid ${border}` }}>
+                                        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: r.col + '18', color: r.col }}>{r.c[0]}</div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-xs font-semibold truncate" style={{ color: ink }}>{r.c}</div>
+                                            <div className="text-[10px] truncate" style={{ color: inkFaint }}>{r.p}</div>
                                         </div>
-                                    ))}
-                                </div>
+                                        <span className="text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0" style={{ background: r.col + '18', color: r.col }}>{r.s}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </motion.div>
-                </motion.div>
-
-                {/* Scroll indicator */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1.5 }}
-                    className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-                >
-                    <p className="text-xs font-semibold text-black/25 uppercase tracking-widest">Keşfet</p>
-                    <motion.div
-                        animate={{ y: [0, 6, 0] }}
-                        transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-                        className="w-5 h-8 rounded-full border-2 border-black/15 flex items-start justify-center pt-1.5"
-                    >
-                        <div className="w-1 h-1.5 rounded-full bg-black/30" />
-                    </motion.div>
-                </motion.div>
+                </div>
             </section>
 
-            {/* ══════════════════════════════════════════════════════
-                STATS STRIP
-            ══════════════════════════════════════════════════════ */}
-            <section className="border-y border-black/5 bg-white py-12 px-6">
+            {/* ── STATS ─────────────────────────────────────────── */}
+            <section style={{ background: bone2, borderTop: `1px solid ${border}`, borderBottom: `1px solid ${border}` }} className="py-12 sm:py-16 px-5">
                 <div className="mx-auto max-w-[1100px]">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                        {stats.map((s, i) => (
-                            <Reveal key={s.label} delay={i * 0.08}>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12">
+                        {[
+                            { v: '∞', l: t('landing.statsUnlimited'), s: t('landing.statsUnlimitedSub') },
+                            { v: '6', l: t('landing.statsWidgets'), s: t('landing.statsWidgetsSub') },
+                            { v: '0', l: t('landing.statsServer'), s: t('landing.statsServerSub') },
+                            { v: '%100', l: t('landing.statsFree'), s: t('landing.statsFreeSub') },
+                        ].map((s, i) => (
+                            <Reveal key={s.l} delay={i * 0.08}>
                                 <div className="text-center">
-                                    <div className="text-4xl md:text-5xl font-black tracking-tighter text-[#1d1d1f] mb-1">{s.value}</div>
-                                    <div className="text-sm font-bold text-black/70">{s.label}</div>
-                                    <div className="text-xs text-black/40 mt-0.5">{s.desc}</div>
+                                    <div className="text-3xl sm:text-4xl font-black tracking-tighter mb-1" style={{
+                                        background: accent,
+                                        WebkitBackgroundClip: 'text',
+                                        WebkitTextFillColor: 'transparent',
+                                        backgroundClip: 'text',
+                                    }}>{s.v}</div>
+                                    <div className="text-sm font-bold" style={{ color: ink }}>{s.l}</div>
+                                    <div className="text-xs mt-0.5" style={{ color: inkFaint }}>{s.s}</div>
                                 </div>
                             </Reveal>
                         ))}
@@ -280,30 +317,26 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* ══════════════════════════════════════════════════════
-                FEATURES GRID — Apple-style card grid
-            ══════════════════════════════════════════════════════ */}
-            <section id="features" className="py-28 px-6">
+            {/* ── FEATURES ──────────────────────────────────────── */}
+            <section id="features" className="py-24 sm:py-32 px-5" style={{ background: bone }}>
                 <div className="mx-auto max-w-[1100px]">
                     <Reveal>
-                        <div className="text-center mb-16">
-                            <p className="text-xs font-bold uppercase tracking-[0.2em] text-black/40 mb-3">Özellikler</p>
-                            <h2 className="text-[clamp(32px,5vw,52px)] font-extrabold tracking-tight text-[#1d1d1f] leading-tight mb-4">
-                                İhtiyacınız olan her şey,<br />tek yerde.
+                        <div className="text-center mb-16 sm:mb-20">
+                            <p className="text-xs font-bold uppercase tracking-[0.22em] mb-3" style={{ color: '#f97316' }}>{t('landing.featuresLabel')}</p>
+                            <h2 className="font-black tracking-[-0.03em] leading-tight mb-4" style={{ fontSize: 'clamp(28px,5vw,54px)', color: ink }}>
+                                {t('landing.featuresTitle')}
                             </h2>
-                            <p className="text-lg text-black/50 max-w-xl mx-auto leading-relaxed">
-                                Binlerce saat kaybettiren Excel tablolarından kurtulun.
-                            </p>
+                            <p className="text-base max-w-xl mx-auto" style={{ color: inkMid }}>{t('landing.featuresSub')}</p>
                         </div>
                     </Reveal>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {features.map((f, i) => (
-                            <Reveal key={f.title} delay={i * 0.07}>
-                                <div className={`h-full rounded-3xl bg-gradient-to-br ${f.color} border ${f.border} p-7 transition-all hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)] cursor-default`}>
-                                    <div className={`text-4xl mb-5`}>{f.emoji}</div>
-                                    <h3 className={`text-lg font-bold ${f.accent} mb-2`}>{f.title}</h3>
-                                    <p className="text-sm text-black/60 leading-relaxed">{f.description}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {feats.map((f, i) => (
+                            <Reveal key={f.t} delay={i * 0.07}>
+                                <div className="rounded-2xl sm:rounded-3xl p-6 sm:p-8 h-full transition-all hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] cursor-default"
+                                    style={{ background: '#fff', border: `1px solid ${border}` }}>
+                                    <div className="text-3xl mb-4">{f.e}</div>
+                                    <h3 className="text-base font-bold mb-2" style={{ color: ink }}>{f.t}</h3>
+                                    <p className="text-sm leading-relaxed" style={{ color: inkMid }}>{f.d}</p>
                                 </div>
                             </Reveal>
                         ))}
@@ -311,111 +344,63 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* ══════════════════════════════════════════════════════
-                HOW IT WORKS — Step-by-step with animation
-            ══════════════════════════════════════════════════════ */}
-            <section className="bg-white border-y border-black/5 py-28 px-6">
+            {/* ── HOW IT WORKS ──────────────────────────────────── */}
+            <section id="how" style={{ background: bone2, borderTop: `1px solid ${border}`, borderBottom: `1px solid ${border}` }} className="py-24 sm:py-32 px-5">
                 <div className="mx-auto max-w-[1100px]">
                     <Reveal>
-                        <div className="text-center mb-16">
-                            <p className="text-xs font-bold uppercase tracking-[0.2em] text-black/40 mb-3">Nasıl Çalışır</p>
-                            <h2 className="text-[clamp(32px,5vw,52px)] font-extrabold tracking-tight text-[#1d1d1f] leading-tight">
-                                4 adımda<br />kariyer kontrolü.
+                        <div className="text-center mb-16 sm:mb-20">
+                            <p className="text-xs font-bold uppercase tracking-[0.22em] mb-3" style={{ color: '#a855f7' }}>{t('landing.howLabel')}</p>
+                            <h2 className="font-black tracking-[-0.03em] leading-tight" style={{ fontSize: 'clamp(28px,5vw,54px)', color: ink }}>
+                                {t('landing.howTitle')}
                             </h2>
                         </div>
                     </Reveal>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {howItWorks.map((s, i) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {steps.map((s, i) => (
                             <Reveal key={s.step} delay={i * 0.1}>
-                                <motion.div
-                                    animate={activeStep === i ? { scale: 1.03, y: -4 } : { scale: 1, y: 0 }}
-                                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                                    className={`rounded-3xl p-7 border transition-all ${activeStep === i ? 'bg-gradient-to-br from-indigo-500 to-blue-600 border-transparent text-white shadow-[0_16px_48px_rgba(99,102,241,0.3)]' : 'bg-[#f8f8fa] border-black/5'}`}
-                                >
-                                    <div className={`text-4xl font-black tracking-tighter mb-4 ${activeStep === i ? 'text-white/30' : 'text-black/10'}`}>{s.step}</div>
-                                    <div className={`text-lg font-bold mb-2 ${activeStep === i ? 'text-white' : 'text-[#1d1d1f]'}`}>{s.title}</div>
-                                    <p className={`text-sm leading-relaxed ${activeStep === i ? 'text-white/75' : 'text-black/50'}`}>{s.desc}</p>
+                                <motion.div animate={activeStep === i ? { scale: 1.04, y: -6 } : { scale: 1, y: 0 }}
+                                    transition={{ duration: 0.4 }}
+                                    className="rounded-2xl sm:rounded-3xl p-6 sm:p-8 h-full cursor-default transition-shadow"
+                                    style={activeStep === i
+                                        ? { background: accent as unknown as string, border: 'none', boxShadow: '0 12px 40px rgba(249,115,22,0.2)' }
+                                        : { background: '#fff', border: `1px solid ${border}` }
+                                    }>
+                                    <div className="text-4xl font-black mb-4" style={{ color: activeStep === i ? 'rgba(255,255,255,0.22)' : border }}>{s.step}</div>
+                                    <div className="text-base font-bold mb-2" style={{ color: activeStep === i ? '#fff' : ink }}>{s.title}</div>
+                                    <p className="text-sm leading-relaxed" style={{ color: activeStep === i ? 'rgba(255,255,255,0.75)' : inkMid }}>{s.desc}</p>
                                 </motion.div>
                             </Reveal>
                         ))}
                     </div>
-
-                    {/* Step progress dots */}
                     <div className="flex justify-center gap-2 mt-10">
-                        {howItWorks.map((_, i) => (
+                        {steps.map((_, i) => (
                             <button key={i} onClick={() => setActiveStep(i)}
-                                className={`transition-all rounded-full ${activeStep === i ? 'w-8 h-2 bg-indigo-600' : 'w-2 h-2 bg-black/15 hover:bg-black/30'}`} />
+                                className="rounded-full transition-all"
+                                style={{ width: activeStep === i ? 28 : 8, height: 8, background: activeStep === i ? '#f97316' : border }} />
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* ══════════════════════════════════════════════════════
-                TESTIMONIAL / INSIGHT SECTION
-            ══════════════════════════════════════════════════════ */}
-            <section className="py-28 px-6">
-                <div className="mx-auto max-w-[1100px]">
+            {/* ── CTA ───────────────────────────────────────────── */}
+            <section className="px-4 sm:px-6 py-20 sm:py-28" style={{ background: bone }}>
+                <div className="mx-auto max-w-[960px]">
                     <Reveal>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                            <div>
-                                <p className="text-xs font-bold uppercase tracking-[0.2em] text-black/40 mb-4">Neden NextStep?</p>
-                                <h2 className="text-[clamp(28px,4vw,44px)] font-extrabold tracking-tight text-[#1d1d1f] leading-tight mb-6">
-                                    Strateji olmadan<br />başvuru, şans oyunu.
+                        <div className="relative text-center rounded-[28px] sm:rounded-[40px] p-12 sm:p-20 overflow-hidden"
+                            style={{ background: accent as unknown as string, boxShadow: '0 24px 80px rgba(249,115,22,0.2)' }}>
+                            <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(0,0,0,0.08)' }} />
+                            <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full pointer-events-none" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                            <div className="relative z-10">
+                                <h2 className="font-black leading-tight tracking-tight text-white mb-4" style={{ fontSize: 'clamp(24px,4vw,48px)' }}>
+                                    {t('landing.ctaTitle')}
                                 </h2>
-                                <p className="text-base text-black/55 leading-relaxed mb-8">
-                                    Ortalama iş arayan 127 başvuru gönderiyor. Bunların %90'ını hatırlamıyor.
-                                    NextStep, hangisinin nerede olduğunu, hangisinin işe yaradığını ve bir sonraki adımın ne olması gerektiğini net gösterir.
+                                <p className="mx-auto mb-10 max-w-md text-base leading-relaxed" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                                    {t('landing.ctaSub')}
                                 </p>
                                 <button onClick={() => navigate('/login')}
-                                    className="rounded-full bg-gradient-to-r from-indigo-500 to-blue-600 px-8 py-4 text-sm font-bold text-white transition-all hover:shadow-[0_8px_32px_rgba(99,102,241,0.4)] hover:-translate-y-0.5 hover:scale-[1.02]">
-                                    Hemen Dene →
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                {[
-                                    { n: '%67', t: 'Takip eden aday', d: 'daha fazla 2. görüşmeye geçer' },
-                                    { n: '127', t: 'Ortalama başvuru', d: 'iş aramada — çoğu takipsiz' },
-                                    { n: '3x', t: 'Motivasyon etkisi', d: 'yazılı başvurularda dönüş' },
-                                    { n: '14gün', t: 'Ortalama yanıt', d: 'takip etmezsen unutulur' },
-                                ].map(card => (
-                                    <div key={card.n} className="bg-white rounded-3xl border border-black/5 shadow-[0_2px_16px_rgba(0,0,0,0.04)] p-6">
-                                        <div className="text-3xl font-black tracking-tight text-[#1d1d1f] mb-1">{card.n}</div>
-                                        <div className="text-sm font-bold text-black/70 mb-1">{card.t}</div>
-                                        <div className="text-xs text-black/40 leading-relaxed">{card.d}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </Reveal>
-                </div>
-            </section>
-
-            {/* ══════════════════════════════════════════════════════
-                CTA — Full width centered gradient card
-            ══════════════════════════════════════════════════════ */}
-            <section className="px-4 sm:px-6 mb-32 md:mb-48">
-                <div className="mx-auto max-w-[1100px]">
-                    <Reveal>
-                        <div
-                            className="w-full text-center rounded-[32px] p-14 md:p-24 text-white relative overflow-hidden shadow-2xl"
-                            style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%)' }}
-                        >
-                            <div className="absolute inset-0 bg-white/5 mix-blend-overlay pointer-events-none" />
-                            <div className="absolute -top-24 -right-24 w-72 h-72 bg-white/8 rounded-full blur-3xl pointer-events-none" />
-                            <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-white/8 rounded-full blur-3xl pointer-events-none" />
-                            <div className="relative z-10">
-                                <h2 className="mb-5 text-white font-extrabold leading-tight tracking-tight text-[clamp(28px,5vw,48px)]">
-                                    Başvuruya Hazır Mısın?
-                                </h2>
-                                <p className="mx-auto mb-10 max-w-lg text-lg text-white/85 leading-relaxed">
-                                    Saniyeler içinde hesabınızı oluşturun ve NextStep ile kariyerinizi şekillendirin.
-                                </p>
-                                <button
-                                    onClick={() => navigate('/login')}
-                                    className="inline-flex items-center justify-center rounded-full bg-white px-10 py-4 text-base font-bold text-indigo-700 transition-all hover:scale-[1.04] hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(255,255,255,0.35)]"
-                                >
-                                    Ücretsiz Başla
+                                    className="rounded-full bg-white px-12 py-4 text-base font-bold transition-all hover:scale-[1.05] hover:-translate-y-0.5"
+                                    style={{ color: '#f97316' }}>
+                                    {t('landing.ctaBtn')}
                                 </button>
                             </div>
                         </div>
@@ -423,32 +408,21 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* ══════════════════════════════════════════════════════
-                FOOTER
-            ══════════════════════════════════════════════════════ */}
-            <footer className="border-t border-black/5 py-12 px-6">
-                <div className="mx-auto max-w-[1100px] flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* ── FOOTER ────────────────────────────────────────── */}
+            <footer style={{ borderTop: `1px solid ${border}`, background: bone2 }} className="py-8 sm:py-10 px-5">
+                <div className="mx-auto max-w-[1100px] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
                     <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow">
+                        <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: accent as unknown as string }}>
                             <span className="text-white font-bold text-xs">N</span>
                         </div>
-                        <span className="font-bold text-[#1d1d1f] tracking-tight">NextStep</span>
+                        <span className="font-bold tracking-tight" style={{ color: ink }}>NextStep</span>
                     </div>
-                    <p className="text-xs font-medium text-black/35 text-center">
-                        Bu site Kutluhan Gül tarafından iş başvurularını takip etmeyi kolaylaştırmak için geliştirilmiştir.
+                    <p className="text-xs" style={{ color: inkFaint }}>
+                        {lang === 'tr' ? 'Kutluhan Gül tarafından iş başvurularını takip etmek için.' : 'Built by Kutluhan Gül for smarter job tracking.'}
                     </p>
-                    <p className="text-xs text-black/30">© 2026 NextStep</p>
+                    <p className="text-xs" style={{ color: inkFaint }}>© 2026 NextStep</p>
                 </div>
             </footer>
-
-            {/* ── Global animation keyframes ─ */}
-            <style>{`
-                @keyframes gradientFlow {
-                    0% { background-position: 0% center; }
-                    50% { background-position: 100% center; }
-                    100% { background-position: 0% center; }
-                }
-            `}</style>
         </div>
     );
 };

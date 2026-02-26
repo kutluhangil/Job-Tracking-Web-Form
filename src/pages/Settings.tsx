@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../store/useAppStore';
+import emailjs from '@emailjs/browser';
+import { useLanguage } from '../lib/i18n';
+
 
 const fadeUp = (delay = 0) => ({
     initial: { opacity: 0, y: 16 },
@@ -15,6 +18,7 @@ const Settings = () => {
     const user = useAppStore(state => state.user);
     const logout = useAppStore(state => state.logout);
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [showConfirm, setShowConfirm] = useState(false);
     const [theme, setTheme] = useState<Theme>('light');
     const [notifications, setNotifications] = useState({
@@ -23,6 +27,42 @@ const Settings = () => {
         offerAlerts: false,
     });
     const [saved, setSaved] = useState<string | null>(null);
+    const [fbType, setFbType] = useState('Bug / Hata');
+    const [fbMessage, setFbMessage] = useState('');
+    const [fbSending, setFbSending] = useState(false);
+    const [fbSent, setFbSent] = useState(false);
+
+    const handleFeedback = async () => {
+        if (!fbMessage.trim() || fbSending) return;
+        setFbSending(true);
+        try {
+            // EmailJS — add these 3 vars to .env.local after setup:
+            // VITE_EMAILJS_SERVICE_ID, VITE_EMAILJS_TEMPLATE_ID, VITE_EMAILJS_PUBLIC_KEY
+            const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID as string;
+            const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID as string;
+            const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY as string;
+
+            if (serviceId && templateId && publicKey) {
+                await emailjs.send(serviceId, templateId, {
+                    feedback_type: fbType,
+                    feedback_message: fbMessage,
+                    user_email: user?.email ?? 'anonymous',
+                    to_email: 'kutluhangul@windowslive.com',
+                }, publicKey);
+            } else {
+                // Fallback: open mailto if EmailJS not configured yet
+                window.location.href = `mailto:kutluhangul@windowslive.com?subject=NextStep Feedback: ${fbType}&body=${encodeURIComponent(fbMessage)}`;
+            }
+            setFbSent(true);
+            setFbMessage('');
+            setTimeout(() => setFbSent(false), 3500);
+        } catch {
+            window.location.href = `mailto:kutluhangul@windowslive.com?subject=NextStep Feedback: ${fbType}&body=${encodeURIComponent(fbMessage)}`;
+        } finally {
+            setFbSending(false);
+        }
+    };
+
 
     const handleWipeData = () => {
         localStorage.removeItem('nextstep-storage');
@@ -217,8 +257,45 @@ const Settings = () => {
                         </SettingRow>
                     </motion.div>
 
+                    {/* ── GERİ BİLDİRİM ─────────────────────────────────── */}
+                    <motion.div {...fadeUp(0.26)} className="bg-white rounded-[24px] border border-black/5 shadow-[0_2px_24px_#00000008] p-6 sm:p-8">
+                        <div className="flex items-center gap-3 mb-5">
+                            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: 'linear-gradient(135deg, #f97316, #a855f7)' }}>💬</div>
+                            <div>
+                                <h3 className="text-base font-bold text-[#1d1d1f]">{t('settings.fbTitle')}</h3>
+                                <p className="text-xs text-black/40">{t('settings.fbSub')}</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <div className="relative sm:w-44">
+                                    <select value={fbType} onChange={e => setFbType(e.target.value)}
+                                        className="w-full rounded-xl border border-black/8 bg-[#fafafa] px-4 py-3 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-orange-400/25 appearance-none">
+                                        <option>Bug / Hata</option>
+                                        <option>Öneri</option>
+                                        <option>Diğer</option>
+                                    </select>
+                                    <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-black/30">
+                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                    </div>
+                                </div>
+                                <textarea value={fbMessage} onChange={e => setFbMessage(e.target.value)}
+                                    rows={3} placeholder={t('settings.fbMessage')}
+                                    className="flex-1 rounded-xl border border-black/8 bg-[#fafafa] px-4 py-3 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-orange-400/25 resize-none" />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs text-black/35">→ kutluhangul@windowslive.com</p>
+                                <button onClick={handleFeedback} disabled={!fbMessage.trim() || fbSending || fbSent}
+                                    className="rounded-full px-6 py-2.5 text-sm font-bold text-white transition-all hover:-translate-y-0.5 disabled:opacity-50"
+                                    style={{ background: fbSent ? '#22c55e' : 'linear-gradient(135deg, #f97316, #a855f7)' }}>
+                                    {fbSent ? '✓ Gönderildi!' : fbSending ? '...' : t('settings.fbSend')}
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+
                     {/* ── TEHLİKE BÖLGESI ──────────────────────────────────── */}
-                    <motion.div {...fadeUp(0.28)} className="bg-white rounded-[24px] border border-rose-100 shadow-[0_2px_24px_rgba(244,63,94,0.06)] p-6 sm:p-8">
+                    <motion.div {...fadeUp(0.31)} className="bg-white rounded-[24px] border border-rose-100 shadow-[0_2px_24px_rgba(244,63,94,0.06)] p-6 sm:p-8">
                         <h3 className="text-base font-bold text-rose-600 mb-1">Tehlike Bölgesi</h3>
                         <p className="text-xs text-rose-400 mb-5">Bu işlemler geri alınamaz. Dikkatli olun.</p>
 

@@ -1,12 +1,13 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { FloatingDock } from '../components/common/FloatingDock';
+import { GeminiWidget } from '../components/common/GeminiWidget';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export default function AppLayout() {
     const location = useLocation();
 
     return (
-        <div className="relative min-h-screen w-full overflow-hidden bg-[var(--color-apple-bg)] text-[var(--color-apple-text)]">
+        <div className="relative min-h-screen w-full overflow-hidden bg-[#f8f8fa] text-[#1d1d1f]">
             <main className="relative z-0 h-full w-full pb-32">
                 <AnimatePresence mode="wait">
                     <motion.div
@@ -22,9 +23,12 @@ export default function AppLayout() {
                 </AnimatePresence>
             </main>
 
-            <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 w-[calc(100%-2rem)] max-w-max">
+            <div className="fixed bottom-6 sm:bottom-8 left-1/2 z-50 -translate-x-1/2 w-[calc(100%-2rem)] max-w-max">
                 <FloatingDock />
             </div>
+
+            <GeminiWidget />
         </div>
     );
 }
+
