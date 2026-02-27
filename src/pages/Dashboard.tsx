@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import { motion } from 'framer-motion';
+import { useDark } from '../hooks/useDark';
+
 
 const statusColor: Record<string, string> = {
     'Süreçte': 'bg-blue-50 text-blue-700 border-blue-100',
@@ -16,6 +18,15 @@ const Dashboard = () => {
     const applications = useAppStore(state => state.applications);
     const logout = useAppStore(state => state.logout);
     const navigate = useNavigate();
+    const isDark = useDark();
+
+    const card = isDark ? 'bg-[#1c1c1e] border-white/5 text-white' : 'bg-white border-black/5 text-[#1d1d1f]';
+    const rowHover = isDark ? 'hover:bg-white/[0.03]' : 'hover:bg-[#fafafe]';
+    const divider = isDark ? 'divide-white/5' : 'divide-black/5';
+    const mutedText = isDark ? 'text-white/40' : 'text-black/40';
+    const subText = isDark ? 'text-white/60' : 'text-black/60';
+    const colHead = isDark ? 'text-white/30' : 'text-black/40';
+
 
     const total = applications.length;
     const inProgress = applications.filter(a => a.status === 'Süreçte' || a.status === 'Görüşme Bekleniyor').length;
@@ -37,7 +48,7 @@ const Dashboard = () => {
     ];
 
     return (
-        <div className="w-full min-h-screen bg-[#f8f8fa]">
+        <div className={`w-full min-h-screen ${isDark ? 'bg-[#0d0d0f]' : 'bg-[#f8f8fa]'}`}>
             <div className="mx-auto max-w-[1280px] px-6 pt-24 pb-32">
 
                 {/* ── HEADER / GREETING BANNER ─────────────────────── */}
@@ -97,13 +108,13 @@ const Dashboard = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.45, delay: i * 0.08, ease: 'easeOut' }}
-                            className="bg-white rounded-3xl p-6 border border-black/5 shadow-[0_2px_16px_#00000008] hover:shadow-[0_8px_32px_#00000014] hover:-translate-y-0.5 transition-all"
+                            className={`${card} rounded-3xl p-6 border shadow-[0_2px_16px_#00000008] hover:shadow-[0_8px_32px_#00000014] hover:-translate-y-0.5 transition-all`}
                         >
                             <div className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${s.color} flex items-center justify-center mb-4 shadow-sm`}>
                                 <span className="text-white font-bold text-lg">{s.value}</span>
                             </div>
                             <p className={`text-3xl font-bold ${s.text} mb-1`}>{s.value}</p>
-                            <p className="text-sm font-medium text-black/50">{s.label}</p>
+                            <p className={`text-sm font-medium ${mutedText}`}>{s.label}</p>
                         </motion.div>
                     ))}
                 </div>
@@ -118,54 +129,54 @@ const Dashboard = () => {
                     transition={{ duration: 0.5, delay: 0.35, ease: 'easeOut' }}
                 >
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-bold text-[#1d1d1f]">Son Hareketler</h2>
+                        <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-[#1d1d1f]'}`}>Son Hareketler</h2>
                         <button
                             onClick={() => navigate('/applications')}
-                            className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                            className="text-sm font-semibold text-indigo-500 hover:text-indigo-400 transition-colors"
                         >
                             Tümünü Gör →
                         </button>
                     </div>
 
                     {applications.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-black/5">
+                        <div className={`flex flex-col items-center justify-center py-20 rounded-3xl border ${isDark ? 'bg-[#1c1c1e] border-white/5' : 'bg-white border-black/5'}`}>
                             <div className="text-5xl mb-4">📭</div>
-                            <p className="text-black/50 font-medium">Henüz hiç başvuru eklemedin.</p>
+                            <p className={`font-medium ${mutedText}`}>Henüz hiç başvuru eklemedin.</p>
                         </div>
                     ) : (
-                        <div className="bg-white rounded-3xl border border-black/5 shadow-[0_2px_24px_#00000008] overflow-hidden">
+                        <div className={`${card} rounded-3xl border shadow-[0_2px_24px_#00000008] overflow-hidden`}>
                             {/* Table Header */}
-                            <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 py-4 border-b border-black/5 bg-[#fafafa]">
+                            <div className={`hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 py-4 border-b ${isDark ? 'border-white/5 bg-white/[0.02]' : 'border-black/5 bg-[#fafafa]'}`}>
                                 {['Firma / Pozisyon', 'Durum', 'Tarih', 'Platform', 'CV', 'Motivasyon', 'Test', 'İlan'].map(h => (
-                                    <div key={h} className="text-xs font-bold text-black/40 uppercase tracking-widest">{h}</div>
+                                    <div key={h} className={`text-xs font-bold uppercase tracking-widest ${colHead}`}>{h}</div>
                                 ))}
                             </div>
 
                             {/* Rows */}
-                            <div className="flex flex-col divide-y divide-black/5">
+                            <div className={`flex flex-col ${divider}`}>
                                 {applications.slice(0, 5).map((app, i) => (
                                     <motion.div
                                         key={app.id}
                                         initial={{ opacity: 0, x: -12 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 0.4 + i * 0.07, ease: 'easeOut' }}
-                                        className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 py-5 hover:bg-[#fafafe] transition-colors cursor-pointer"
+                                        className={`grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 py-5 ${rowHover} transition-colors cursor-pointer`}
                                     >
                                         <div className="flex flex-col min-w-0">
-                                            <span className="font-bold text-[#1d1d1f] truncate">{app.companyName}</span>
-                                            <span className="text-sm text-black/50 truncate">{app.position}</span>
+                                            <span className={`font-bold truncate ${isDark ? 'text-white' : 'text-[#1d1d1f]'}`}>{app.companyName}</span>
+                                            <span className={`text-sm truncate ${subText}`}>{app.position}</span>
                                         </div>
                                         <div className="flex items-center">
                                             <span className={`text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap ${statusColor[app.status] || 'bg-gray-50 text-gray-600 border-gray-100'}`}>
                                                 {app.status}
                                             </span>
                                         </div>
-                                        <div className="flex items-center text-sm text-black/60">
+                                        <div className={`flex items-center text-sm ${subText}`}>
                                             {new Date(app.date).toLocaleDateString('tr-TR')}
                                         </div>
-                                        <div className="flex items-center text-sm text-black/60">{app.platform || '—'}</div>
-                                        <div className="flex items-center text-sm text-black/60">{app.cvVersion || '—'}</div>
-                                        <div className="flex items-center text-sm text-black/60">
+                                        <div className={`flex items-center text-sm ${subText}`}>{app.platform || '—'}</div>
+                                        <div className={`flex items-center text-sm ${subText}`}>{app.cvVersion || '—'}</div>
+                                        <div className={`flex items-center text-sm ${subText}`}>
                                             {app.motivation ? (
                                                 <span className="text-emerald-600 font-semibold">✓ Eklendi</span>
                                             ) : <span className="text-black/30">—</span>}

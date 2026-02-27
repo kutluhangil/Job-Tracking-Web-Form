@@ -7,6 +7,8 @@ import { Search, Filter, ArrowDown, ArrowUp, Download, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { useDark } from '../hooks/useDark';
+
 
 const Applications = () => {
     const applications = useAppStore(state => state.applications);
@@ -15,6 +17,18 @@ const Applications = () => {
     const [sortField, setSortField] = useState<'date' | 'companyName'>('date');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [selectedApp, setSelectedApp] = useState<typeof applications[0] | null>(null);
+    const isDark = useDark();
+
+    const inputDark = isDark ? 'border-white/10 bg-white/5 text-white placeholder:text-white/30' : 'border-black/10 bg-[#fbfbfd]';
+    const rowCls = isDark
+        ? 'bg-white/5 border-white/5 hover:bg-white/10'
+        : 'bg-white/60 border-black/5 hover:bg-white hover:shadow-md';
+    const subText = isDark ? 'text-white/60' : 'text-black/60';
+    const modalBg = isDark ? 'bg-[#1c1c1e]' : 'bg-white';
+    const modalText = isDark ? 'text-white' : 'text-black';
+    const modalSub = isDark ? 'text-white/40' : 'text-black/40';
+
+
 
     const handleSort = (field: 'date' | 'companyName') => {
         if (sortField === field) {
@@ -90,14 +104,14 @@ const Applications = () => {
     };
 
     return (
-        <div className="mx-auto max-w-[1300px] px-6 pt-24 pb-48">
+        <div className={`mx-auto max-w-[1300px] px-6 pt-24 pb-48 ${isDark ? 'text-white' : ''}`}>
 
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                 <Reveal direction="down" duration={0.6}>
                     <div className="flex items-center gap-6">
                         <div>
                             <Caption>TAKİP</Caption>
-                            <h1 className="mt-1 text-[clamp(28px,4vw,36px)] font-bold tracking-tight text-[#1d1d1f]">
+                            <h1 className={`mt-1 text-[clamp(28px,4vw,36px)] font-bold tracking-tight ${isDark ? 'text-white' : 'text-[#1d1d1f]'}`}>
                                 Tüm Başvurular
                             </h1>
                         </div>
@@ -124,26 +138,26 @@ const Applications = () => {
                         {/* Search */}
                         <div className="relative">
                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                                <Search size={18} className="text-black/40" />
+                                <Search size={18} className={isDark ? 'text-white/40' : 'text-black/40'} />
                             </div>
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Firma veya pozisyon ara..."
-                                className="w-full sm:w-64 rounded-full border border-black/10 bg-[#fbfbfd] py-2.5 pl-11 pr-4 text-sm transition-all focus-gradient-ring"
+                                className={`w-full sm:w-64 rounded-full border py-2.5 pl-11 pr-4 text-sm transition-all focus-gradient-ring ${inputDark}`}
                             />
                         </div>
 
                         {/* Filter */}
                         <div className="relative">
                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                                <Filter size={18} className="text-black/40" />
+                                <Filter size={18} className={isDark ? 'text-white/40' : 'text-black/40'} />
                             </div>
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="w-full sm:w-48 appearance-none rounded-full border border-black/10 bg-[#fbfbfd] py-2.5 pl-11 pr-10 text-sm transition-all focus-gradient-ring"
+                                className={`w-full sm:w-48 appearance-none rounded-full border py-2.5 pl-11 pr-10 text-sm transition-all focus-gradient-ring ${inputDark}`}
                             >
                                 <option value="">Tüm Durumlar</option>
                                 <option value="Süreçte">Süreçte</option>
@@ -191,11 +205,11 @@ const Applications = () => {
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -10 }}
                                         transition={{ delay: index * 0.05 }}
-                                        className="group flex flex-col lg:grid lg:grid-cols-11 gap-4 lg:items-center rounded-2xl p-4 sm:px-6 bg-white/60 shadow-sm border border-black/5 hover:bg-white hover:shadow-md transition-all hover:-translate-y-0.5"
+                                        className={`group flex flex-col lg:grid lg:grid-cols-11 gap-4 lg:items-center rounded-2xl p-4 sm:px-6 shadow-sm border transition-all hover:-translate-y-0.5 ${rowCls}`}
                                     >
                                         <div className="col-span-2 flex flex-col">
-                                            <div className="text-base font-bold text-black group-hover:bg-gradient-to-r group-hover:from-indigo-600 group-hover:to-rose-500 group-hover:bg-clip-text group-hover:text-transparent transition-all">{app.companyName}</div>
-                                            <div className="text-sm text-black/60">{app.position}</div>
+                                            <div className={`text-base font-bold ${isDark ? 'text-white' : 'text-black'} group-hover:bg-gradient-to-r group-hover:from-indigo-500 group-hover:to-rose-500 group-hover:bg-clip-text group-hover:text-transparent transition-all`}>{app.companyName}</div>
+                                            <div className={`text-sm ${subText}`}>{app.position}</div>
                                         </div>
 
                                         <div className="col-span-2 flex items-center">
@@ -204,19 +218,19 @@ const Applications = () => {
                                             </span>
                                         </div>
 
-                                        <div className="col-span-1 text-sm text-black/70">
+                                        <div className={`col-span-1 text-sm ${subText}`}>
                                             {new Date(app.date).toLocaleDateString('tr-TR')}
                                         </div>
 
-                                        <div className="col-span-1 text-sm text-black/80">
+                                        <div className={`col-span-1 text-sm ${isDark ? 'text-white/80' : 'text-black/80'}`}>
                                             {app.platform || '-'}
                                         </div>
 
-                                        <div className="col-span-1 text-sm text-black/80">
+                                        <div className={`col-span-1 text-sm ${isDark ? 'text-white/80' : 'text-black/80'}`}>
                                             {app.cvVersion || '-'}
                                         </div>
 
-                                        <div className="col-span-1 text-sm text-black/60 truncate" title={app.motivation}>
+                                        <div className={`col-span-1 text-sm ${subText} truncate`} title={app.motivation}>
                                             {app.motivation ? 'Eklendi' : '-'}
                                         </div>
 
@@ -266,7 +280,7 @@ const Applications = () => {
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.95, opacity: 0, y: 20 }}
                             transition={{ type: "spring", duration: 0.5 }}
-                            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[32px] bg-white p-8 shadow-2xl"
+                            className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[32px] p-8 shadow-2xl ${modalBg}`}
                             onClick={(e) => e.stopPropagation()}
                         >
                             <button
@@ -277,11 +291,11 @@ const Applications = () => {
                             </button>
 
                             <div className="mb-8">
-                                <div className="text-sm font-semibold text-blue-600 mb-2 uppercase tracking-wide">
+                                <div className="text-sm font-semibold text-blue-500 mb-2 uppercase tracking-wide">
                                     Başvuru Detayı
                                 </div>
-                                <h3 className="text-3xl font-bold tracking-tight text-black">{selectedApp.companyName}</h3>
-                                <div className="text-lg text-black/60 mt-1">{selectedApp.position}</div>
+                                <h3 className={`text-3xl font-bold tracking-tight ${modalText}`}>{selectedApp.companyName}</h3>
+                                <div className={`text-lg mt-1 ${subText}`}>{selectedApp.position}</div>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
@@ -312,13 +326,13 @@ const Applications = () => {
                                 </div>
 
                                 <div>
-                                    <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">Mülakat Notları</div>
-                                    <div className="text-base text-black font-medium">{selectedApp.interviewNotes || '-'}</div>
+                                    <div className={`text-xs font-semibold uppercase tracking-wider mb-2 ${modalSub}`}>Mülakat Notları</div>
+                                    <div className={`text-base font-medium ${modalText}`}>{selectedApp.interviewNotes || '-'}</div>
                                 </div>
 
                                 <div>
-                                    <div className="text-xs font-semibold text-black/40 uppercase tracking-wider mb-2">Mülakat Tarihi</div>
-                                    <div className="text-base text-black font-medium">{selectedApp.interviewDate || '-'}</div>
+                                    <div className={`text-xs font-semibold uppercase tracking-wider mb-2 ${modalSub}`}>Mülakat Tarihi</div>
+                                    <div className={`text-base font-medium ${modalText}`}>{selectedApp.interviewDate || '-'}</div>
                                 </div>
 
                                 {selectedApp.testLink && (
