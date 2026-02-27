@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Github, Linkedin, Mail, CheckCircle2 } from 'lucide-react';
 
 // Assuming spiderman.svg is in the icons folder like NEXT.svg
-import SpidermanIcon from '../icons/spiderman.svg';
+import SpidermanIcon from '../Icons/spiderman.svg';
 
 interface Props {
     isOpen: boolean;
