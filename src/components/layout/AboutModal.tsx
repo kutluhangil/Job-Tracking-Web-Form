@@ -1,83 +1,49 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Github, Linkedin, Mail, Zap, Globe, Layers, CheckCircle } from 'lucide-react';
+import { X, Github, Linkedin, Mail, CheckCircle2 } from 'lucide-react';
+
+// Assuming spiderman.svg is in the icons folder like NEXT.svg
+import SpidermanIcon from '../icons/spiderman.svg';
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
 }
 
-// Typing effect components
-const TypingText = ({ text, delay = 0, className = '' }: { text: string; delay?: number; className?: string }) => {
+// Minimal bone-white design constants matching LandingPage
+const BONE = '#faf9f6';
+const BONE_MUTED = '#f0ede8';
+const INK = '#1a1a1a';
+const BORDER = 'rgba(26, 26, 26, 0.08)';
+
+const FONT_SANS = '-apple-system, "SF Pro Display", "SF Pro Text", BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif';
+const FONT_MONO = '"SF Mono", "JetBrains Mono", "Fira Code", monospace';
+
+// Animated typing text
+const FadeText = ({ text, delay = 0, className = '' }: { text: string; delay?: number; className?: string }) => {
     return (
         <motion.p
-            initial="hidden"
-            animate="visible"
-            variants={{
-                visible: { transition: { staggerChildren: 0.015, delayChildren: delay } },
-                hidden: {},
-            }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay, duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
             className={className}
         >
-            {text.split('').map((char, index) => (
-                <motion.span
-                    key={index}
-                    variants={{
-                        hidden: { opacity: 0, y: 5 },
-                        visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 200, damping: 20 } },
-                    }}
-                >
-                    {char}
-                </motion.span>
-            ))}
+            {text}
         </motion.p>
     );
 };
 
-// Code line component for Tech Stack
-const CodeLine = ({ tag, text, delay = 0 }: { tag: string; text: string; delay: number }) => (
+// Simple HTML-like Code line for Tech Stack
+const TagLine = ({ tag, text, delay = 0 }: { tag: string; text: string; delay: number }) => (
     <motion.div
-        initial={{ opacity: 0, x: -10 }}
+        initial={{ opacity: 0, x: -8 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ delay, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-        className="font-mono text-[13px] sm:text-[14px] leading-relaxed flex items-start sm:items-center gap-2"
-    >
-        <span className="text-orange-400 font-medium opacity-80">&lt;{tag}&gt;</span>
-        <span className="text-gray-300 font-medium tracking-wide">{text}</span>
-        <span className="text-orange-400 font-medium opacity-80">&lt;/{tag}&gt;</span>
-    </motion.div>
-);
-
-// Animated floating note
-const Note = ({ text, delay, icon: Icon }: { text: string; delay: number; icon: any }) => (
-    <motion.div
-        initial={{ opacity: 0, y: 15, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ delay, duration: 0.5, type: 'spring', stiffness: 100 }}
-        className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.03] border border-white/[0.05] shadow-lg backdrop-blur-md"
-    >
-        <div className="w-8 h-8 rounded-full bg-white/[0.05] flex items-center justify-center">
-            <Icon size={16} className="text-gray-400" />
-        </div>
-        <span className="text-sm font-medium text-gray-300 tracking-wide">{text}</span>
-    </motion.div>
-);
-
-// Dashboard-style insight card
-const InsightCard = ({ title, desc, delay, icon: Icon, colorClass }: { title: string; desc: string; delay: number; icon: any; colorClass: string }) => (
-    <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
         transition={{ delay, duration: 0.5, ease: 'easeOut' }}
-        className="flex flex-col gap-2 p-5 rounded-[24px] bg-[#1c1c1e] border border-white/[0.04] hover:bg-[#2c2c2e] transition-colors duration-300"
+        style={{ fontFamily: FONT_MONO, fontSize: '13px', display: 'flex', gap: '8px', alignItems: 'center' }}
     >
-        <div className="flex items-center gap-3 mb-1">
-            <div className={`p-2 rounded-xl bg-white/[0.03] ${colorClass}`}>
-                <Icon size={18} strokeWidth={2.5} />
-            </div>
-            <h4 className="text-[13px] font-bold tracking-wider uppercase text-gray-400">{title}</h4>
-        </div>
-        <p className="text-sm text-gray-300 leading-relaxed font-medium">{desc}</p>
+        <span style={{ color: '#0ea5e9', fontWeight: 500 }}>&lt;{tag}&gt;</span>
+        <span style={{ color: INK, fontWeight: 500 }}>{text}</span>
+        <span style={{ color: '#0ea5e9', fontWeight: 500 }}>&lt;/{tag}&gt;</span>
     </motion.div>
 );
 
@@ -89,205 +55,263 @@ export const AboutModal = ({ isOpen, onClose }: Props) => {
         return () => window.removeEventListener('keydown', handleEsc);
     }, [onClose]);
 
-    // Reference for scrolling animation control if needed, but since it's a modal, we animate on mount
-    const containerRef = useRef(null);
-
     return (
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop */}
+                    {/* Backdrop: Clean glass blur */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                        transition={{ duration: 0.4 }}
                         onClick={onClose}
-                        className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-2xl"
+                        style={{
+                            position: 'fixed', inset: 0,
+                            background: 'rgba(250, 249, 246, 0.6)',
+                            backdropFilter: 'blur(16px)',
+                            WebkitBackdropFilter: 'blur(16px)',
+                            zIndex: 200,
+                        }}
                     />
 
                     {/* Modal Wrapper */}
-                    <div className="fixed inset-0 z-[201] flex items-center justify-center p-4 sm:p-6 md:p-12 pointer-events-none overflow-y-auto">
-
+                    <div style={{
+                        position: 'fixed', inset: 0, zIndex: 201, pointerEvents: 'none',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        padding: '20px', fontFamily: FONT_SANS
+                    }}>
                         <motion.div
-                            ref={containerRef}
-                            initial={{ opacity: 0, y: 40, scale: 0.98 }}
+                            initial={{ opacity: 0, y: 30, scale: 0.98 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 20, scale: 0.98 }}
                             transition={{ duration: 0.6, type: 'spring', bounce: 0, damping: 25, stiffness: 200 }}
-                            className="relative w-full max-w-[900px] pointer-events-auto rounded-[32px] sm:rounded-[40px] overflow-hidden my-auto"
                             style={{
-                                // Premium dark matte board style
-                                background: 'radial-gradient(120% 120% at 50% -20%, #2A2A2E 0%, #151516 100%)',
-                                boxShadow: '0 40px 100px -20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)',
+                                pointerEvents: 'auto',
+                                width: '100%',
+                                maxWidth: '840px',
+                                maxHeight: '90vh',
+                                overflowY: 'auto',
+                                background: BONE,
+                                borderRadius: '32px',
+                                // Light, elegant Apple shadow
+                                boxShadow: '0 40px 100px -20px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04)',
+                                border: '1px solid ' + BORDER,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                position: 'relative'
                             }}
                         >
-                            {/* Subtle Rainbow Accent Line */}
-                            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#ff5f57] via-[#febc2e] to-[#28c840] opacity-80" />
-
-                            {/* Subtle Dust / Grain Overlay */}
-                            <div
-                                className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
-                                style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}
-                            />
-
                             {/* Close Button */}
                             <button
                                 onClick={onClose}
-                                className="absolute top-5 right-5 sm:top-7 sm:right-7 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300 z-10"
+                                style={{
+                                    position: 'absolute', top: '24px', right: '24px', zIndex: 10,
+                                    width: '36px', height: '36px', borderRadius: '50%',
+                                    background: BONE_MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: INK, border: 'none', cursor: 'pointer', transition: 'background 0.2s',
+                                    opacity: 0.6,
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                                onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
                             >
-                                <X size={20} />
+                                <X size={18} strokeWidth={2} />
                             </button>
 
-                            {/* Content Inner Container */}
-                            <div className="relative z-10 p-8 sm:p-12 md:p-[72px] flex flex-col gap-16">
+                            <div style={{ padding: '48px', display: 'flex', flexDirection: 'column', gap: '48px' }}>
 
                                 {/* ── Header / Intro ── */}
-                                <div className="flex flex-col md:flex-row gap-8 sm:gap-12 items-start">
-                                    {/* Spiderman Avatar */}
+                                <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+
+                                    {/* Spiderman SVG Avatar */}
                                     <motion.div
-                                        initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-                                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                        transition={{ duration: 0.7, type: 'spring', bounce: 0.4 }}
-                                        className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] shrink-0 rounded-[32px] overflow-hidden bg-[#1c1c1e] border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ duration: 0.5 }}
+                                        style={{
+                                            width: '100px', height: '100px', flexShrink: 0,
+                                            borderRadius: '24px',
+                                            background: '#ffffff',
+                                            border: `1px solid ${BORDER}`,
+                                            boxShadow: '0 8px 24px rgba(0,0,0,0.04)',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            overflow: 'hidden'
+                                        }}
                                     >
-                                        <img src="/spiderman.png" alt="Developer" className="w-full h-full object-cover" />
+                                        <img src={SpidermanIcon} alt="Spider-Man" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     </motion.div>
 
-                                    <div className="flex-1 space-y-5">
+                                    <div style={{ flex: 1, minWidth: '240px' }}>
                                         <motion.h2
-                                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}
-                                            className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-3"
+                                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}
+                                            style={{
+                                                fontSize: '28px', fontWeight: 700, letterSpacing: '-0.03em',
+                                                margin: '0 0 16px 0', color: INK,
+                                                display: 'flex', alignItems: 'center', gap: '8px'
+                                            }}
                                         >
-                                            <span className="opacity-40 font-mono text-[18px]">##</span>
+                                            <span style={{ opacity: 0.4, fontWeight: 500, fontFamily: FONT_MONO, fontSize: '20px' }}>##</span>
                                             👤 Hakkımda
                                         </motion.h2>
 
-                                        <div className="text-[16px] sm:text-[17px] text-gray-300 leading-relaxed font-medium tracking-wide space-y-4">
-                                            <TypingText text="Merhaba, ben Kutluhan." delay={0.4} />
-                                            <TypingText text="Yazılım geliştirmeyi öğrenirken iş başvurularımı sistemli takip edebilmek için NextStep'i geliştirdim." delay={1.0} />
-                                            <TypingText text="Bu proje sadece bir takip aracı değil; disiplin, analiz ve gelişim sürecimin bir yansıması." delay={2.5} className="text-gray-400" />
+                                        <div style={{ fontSize: '16px', lineHeight: 1.6, color: INK, opacity: 0.8, display: 'flex', flexDirection: 'column', gap: '12px', fontWeight: 400 }}>
+                                            <FadeText text="Merhaba, ben Kutluhan." delay={0.2} />
+                                            <FadeText text="Yazılım geliştirmeyi öğrenirken iş başvurularımı sistemli takip edebilmek için NextStep’i geliştirdim." delay={0.4} />
+                                            <FadeText text="Bu proje sadece bir takip aracı değil; disiplin, analiz ve gelişim sürecimin bir yansıması." delay={0.6} />
                                         </div>
                                     </div>
                                 </div>
 
 
-                                {/* ── Main Content Split ── */}
-                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-start">
+                                {/* ── Two Column Content ── */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px' }}>
 
-                                    {/* Left Column: Tech Stack & Notes */}
-                                    <div className="lg:col-span-5 flex flex-col gap-10">
+                                    {/* Left: Code Block & Notes */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
-                                        {/* Tech Stack Code Block */}
-                                        <div className="relative group">
-                                            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 to-purple-500/20 rounded-[28px] blur-lg opacity-0 group-hover:opacity-100 transition duration-700" />
-                                            <div className="relative bg-[#111112] border border-white/10 rounded-[24px] p-6 sm:p-8 shadow-2xl overflow-hidden">
-                                                {/* MacOS Window Dots */}
-                                                <div className="flex gap-2 mb-6">
-                                                    <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                                                    <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                                                    <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                                        {/* Tech Stack Code Block (Minimal Light Version) */}
+                                        <div style={{
+                                            background: '#ffffff', border: `1px solid ${BORDER}`,
+                                            borderRadius: '20px', padding: '24px',
+                                            boxShadow: '0 12px 32px rgba(0,0,0,0.03)'
+                                        }}>
+                                            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f57', opacity: 0.8 }} />
+                                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#febc2e', opacity: 0.8 }} />
+                                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#28c840', opacity: 0.8 }} />
+                                            </div>
+
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <TagLine tag="stack" text="" delay={0.8} />
+                                                <div style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px', borderLeft: `1px solid ${BONE_MUTED}`, margin: '4px 0 4px 10px' }}>
+                                                    <TagLine tag="frontend" text="React + Vite" delay={0.9} />
+                                                    <TagLine tag="backend" text="Firebase" delay={1.0} />
+                                                    <TagLine tag="database" text="Firestore" delay={1.1} />
+                                                    <TagLine tag="ui" text="Tailwind + Motion" delay={1.2} />
                                                 </div>
-
-                                                <div className="flex flex-col gap-3">
-                                                    <CodeLine tag="stack" text="" delay={3.5} />
-                                                    <div className="pl-6 flex flex-col gap-3 border-l border-white/5 ml-3 my-1">
-                                                        <CodeLine tag="frontend" text="React + Vite" delay={3.7} />
-                                                        <CodeLine tag="backend" text="Firebase" delay={3.9} />
-                                                        <CodeLine tag="database" text="Firestore" delay={4.1} />
-                                                        <CodeLine tag="ui" text="Tailwind + Motion" delay={4.3} />
-                                                    </div>
-                                                    <CodeLine tag="stack" text="" delay={4.5} />
-                                                </div>
-
-                                                {/* Blinking Cursor */}
-                                                <motion.div
-                                                    animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 1 }}
-                                                    className="w-[8px] h-[18px] bg-orange-400 mt-4 ml-1 rounded-[1px]"
-                                                />
+                                                <TagLine tag="stack" text="" delay={1.3} />
                                             </div>
                                         </div>
 
-                                        {/* Animated Notes */}
-                                        <div className="flex flex-col gap-3">
-                                            <div className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-2 px-2">Kazanımlar</div>
-                                            <Note delay={4.6} icon={CheckCircle} text="Motivasyon" />
-                                            <Note delay={4.8} icon={Layers} text="Sistematik düşünme" />
-                                            <Note delay={5.0} icon={Zap} text="Süreç analizi" />
-                                            <Note delay={5.2} icon={Globe} text="Gelişim takibi" />
+                                        {/* Minimal Notes List */}
+                                        <div>
+                                            <div style={{ fontSize: '11px', fontWeight: 600, color: INK, opacity: 0.4, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>
+                                                Kazanımlar
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                {[
+                                                    "Motivasyon",
+                                                    "Sistematik düşünme",
+                                                    "Süreç analizi",
+                                                    "Gelişim takibi"
+                                                ].map((note, i) => (
+                                                    <motion.div
+                                                        key={note}
+                                                        initial={{ opacity: 0, x: -10 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ delay: 1.4 + (i * 0.1), duration: 0.5 }}
+                                                        style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: INK, fontWeight: 500 }}
+                                                    >
+                                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: INK, opacity: 0.2 }} />
+                                                        <span>{note}</span>
+                                                    </motion.div>
+                                                ))}
+                                            </div>
                                         </div>
-
                                     </div>
 
-                                    {/* Right Column: Insights Panel */}
-                                    <div className="lg:col-span-7 flex flex-col w-full">
-                                        <motion.div
-                                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.6, duration: 1 }}
-                                            className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-5 px-2"
-                                        >
-                                            Proje Değeri
-                                        </motion.div>
+                                    {/* Right: Insights & Links */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <InsightCard
-                                                delay={3.8}
-                                                title="Why I built this"
-                                                desc="Gerçek bir problemi çözmek için yola çıktım. Bu araç, pratik bir ihtiyacın ve kişisel motivasyonun kodlanmış halidir."
-                                                icon={Zap}
-                                                colorClass="text-orange-400"
-                                            />
-                                            <InsightCard
-                                                delay={4.0}
-                                                title="Target Structure"
-                                                desc="Karmaşık bir mimariyi minimal bir UI altında sunarak, işlevsellikten ödün vermeden sadeliği hedefledim."
-                                                icon={Layers}
-                                                colorClass="text-purple-400"
-                                            />
-                                            <InsightCard
-                                                delay={4.2}
-                                                title="Tech Precision"
-                                                desc="Kullanılan teknolojiler rastgele değil; hızı, güvenliği ve ölçeklenebilirliği sağlamak için özel olarak seçildi."
-                                                icon={CheckCircle}
-                                                colorClass="text-green-400"
-                                            />
-                                            <InsightCard
-                                                delay={4.4}
-                                                title="The Outcome"
-                                                desc="Sadece başvuruları değil, kendi kariyer stratejimi ve yazılım geliştirme disiplinimi de yönetebiliyorum."
-                                                icon={Globe}
-                                                colorClass="text-blue-400"
-                                            />
+                                        {/* Insight Panels */}
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                            {[
+                                                { title: 'Why I built this', desc: 'Gerçek bir problemi çözmek için yola çıktım. Bu araç, pratik bir ihtiyacın ve kişisel motivasyonun kodlanmış halidir.' },
+                                                { title: 'Connection matters', desc: 'Sadece kod yazmak yetmez, iletişim kurabilmek de önemli. Bu yüzden beni GitHub ve LinkedIn üzerinden inceleyebilirsiniz.' },
+                                                { title: 'Choosing the stack', desc: 'Kullanılan teknolojiler modern web standartlarını, performansı ve ölçeklenebilirliği sağlamak için özel olarak seçildi.' },
+                                                { title: 'Professional setup', desc: 'Kurulum talimatları ve dokümantasyon, koda duyduğum saygının ve ciddiyetin bir göstergesidir.' },
+                                            ].map((item, i) => (
+                                                <motion.div
+                                                    key={i}
+                                                    initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0 + (i * 0.15), duration: 0.5 }}
+                                                    style={{
+                                                        background: '#ffffff',
+                                                        border: `1px solid ${BORDER}`,
+                                                        borderRadius: '16px',
+                                                        padding: '20px',
+                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+                                                    }}
+                                                >
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                                        <CheckCircle2 size={16} strokeWidth={2.5} style={{ color: INK, opacity: 0.4 }} />
+                                                        <div style={{ fontSize: '13px', fontWeight: 600, color: INK, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.title}</div>
+                                                    </div>
+                                                    <div style={{ fontSize: '14px', color: INK, opacity: 0.7, lineHeight: 1.5 }}>
+                                                        {item.desc}
+                                                    </div>
+                                                </motion.div>
+                                            ))}
                                         </div>
-
-                                        {/* Premium Glowing Links */}
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 5.4, duration: 0.6 }}
-                                            className="mt-12 flex flex-wrap gap-4 items-center"
-                                        >
-                                            <a href="https://github.com/kutluhangil" target="_blank" rel="noopener noreferrer" className="group relative">
-                                                <div className="absolute inset-0 bg-white/20 blur-md rounded-full opacity-0 group-hover:opacity-100 transition duration-300" />
-                                                <div className="relative flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-full hover:scale-105 transition-all duration-300">
-                                                    <Github size={18} /><span>GitHub</span>
-                                                </div>
-                                            </a>
-
-                                            <a href="https://www.linkedin.com/in/kutluhangil/" target="_blank" rel="noopener noreferrer" className="group relative">
-                                                <div className="absolute inset-0 bg-[#0A66C2]/40 blur-md rounded-full opacity-0 group-hover:opacity-100 transition duration-300" />
-                                                <div className="relative flex items-center gap-2 px-6 py-3 bg-[#0A66C2] text-white font-semibold rounded-full border border-white/10 hover:scale-105 transition-all duration-300">
-                                                    <Linkedin size={18} /><span>LinkedIn</span>
-                                                </div>
-                                            </a>
-
-                                            <a href="mailto:kutluhangul@windowslive.com" className="group relative">
-                                                <div className="absolute inset-0 bg-white/10 blur-md rounded-full opacity-0 group-hover:opacity-100 transition duration-300" />
-                                                <div className="relative flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 text-white font-semibold rounded-full hover:bg-white/10 hover:scale-105 transition-all duration-300">
-                                                    <Mail size={18} /><span>İletişime Geç</span>
-                                                </div>
-                                            </a>
-                                        </motion.div>
 
                                     </div>
                                 </div>
+
+                                {/* Premium Link Buttons Array */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.8, duration: 0.6 }}
+                                    style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '16px', paddingTop: '32px', borderTop: `1px solid ${BORDER}` }}
+                                >
+                                    <a href="https://github.com/kutluhangil" target="_blank" rel="noopener noreferrer"
+                                        style={{ textDecoration: 'none' }}
+                                    >
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', gap: '10px',
+                                            padding: '12px 24px', borderRadius: '100px',
+                                            background: INK, color: '#fff', fontSize: '14px', fontWeight: 600,
+                                            boxShadow: '0 8px 24px rgba(26,26,26,0.2)',
+                                            transition: 'transform 0.2s, box-shadow 0.2s',
+                                        }}
+                                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(26,26,26,0.3)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(26,26,26,0.2)'; }}
+                                        >
+                                            <Github size={18} /><span>GitHub</span>
+                                        </div>
+                                    </a>
+
+                                    <a href="https://www.linkedin.com/in/kutluhangil/" target="_blank" rel="noopener noreferrer"
+                                        style={{ textDecoration: 'none' }}
+                                    >
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', gap: '10px',
+                                            padding: '12px 24px', borderRadius: '100px',
+                                            background: '#0A66C2', color: '#fff', fontSize: '14px', fontWeight: 600,
+                                            boxShadow: '0 8px 24px rgba(10,102,194,0.3)',
+                                            transition: 'transform 0.2s, box-shadow 0.2s',
+                                        }}
+                                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(10,102,194,0.4)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(10,102,194,0.3)'; }}
+                                        >
+                                            <Linkedin size={18} /><span>LinkedIn</span>
+                                        </div>
+                                    </a>
+
+                                    <a href="mailto:kutluhangil@gmail.com"
+                                        style={{ textDecoration: 'none' }}
+                                    >
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', gap: '10px',
+                                            padding: '12px 24px', borderRadius: '100px',
+                                            background: '#fff', border: `1px solid ${BORDER}`, color: INK, fontSize: '14px', fontWeight: 600,
+                                            boxShadow: '0 8px 24px rgba(0,0,0,0.04)',
+                                            transition: 'transform 0.2s, box-shadow 0.2s',
+                                        }}
+                                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.08)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.04)'; }}
+                                        >
+                                            <Mail size={18} /><span>İletişime Geç</span>
+                                        </div>
+                                    </a>
+                                </motion.div>
 
                             </div>
                         </motion.div>
