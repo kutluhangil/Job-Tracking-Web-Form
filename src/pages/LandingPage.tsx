@@ -104,245 +104,128 @@ const Reveal = ({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 
 // ── FeatureShowcase: interactive stacked window cards ─────────────
 interface ShowcaseProps {
-    bone2: string; border: string; ink: string; inkFaint: string; accent: string; lang: string;
+    bone2: string; border: string; ink: string; inkFaint: string; lang: string;
 }
 
+// ── Real-screenshot showcase ───────────────────────────────────────
 const SCREENS = [
-    {
-        url: 'nextstep.app/dashboard',
-        label: { tr: 'Dashboard', en: 'Dashboard' },
-        desc: { tr: 'Anlık özet, istatistikler ve son başvurular', en: 'Live stats, summary, and recent applications' },
-        offset: { x: 0, y: 0, rotate: 0 },
-        content: (border: string, inkFaint: string) => (
-            <div className="p-4" style={{ background: '#faf9f6' }}>
-                <div className="rounded-xl p-3 mb-3" style={{ background: 'linear-gradient(135deg, #f97316, #a855f7)' }}>
-                    <div className="text-[9px] text-white/60 mb-0.5">27 Şubat Cuma</div>
-                    <div className="text-sm font-bold text-white">Merhaba, Kutluhan 👋</div>
-                </div>
-                <div className="grid grid-cols-4 gap-1.5 mb-3">
-                    {[{ n: '24', l: 'Toplam', c: '#f97316' }, { n: '7', l: 'Bu Ay', c: '#a855f7' }, { n: '5', l: 'Süreçte', c: '#ec4899' }, { n: '2', l: 'Olumlu', c: '#22c55e' }].map(s => (
-                        <div key={s.l} className="rounded-xl p-2" style={{ background: '#fff', border: `1px solid ${border}` }}>
-                            <div className="text-sm font-black" style={{ color: s.c }}>{s.n}</div>
-                            <div className="text-[8px]" style={{ color: inkFaint }}>{s.l}</div>
-                        </div>
-                    ))}
-                </div>
-                {[{ c: 'Apple', s: 'Görüşme', col: '#a855f7' }, { c: 'Spotify', s: 'Süreçte', col: '#f97316' }, { c: 'Notion', s: 'Teklif', col: '#22c55e' }].map(r => (
-                    <div key={r.c} className="flex items-center justify-between py-1" style={{ borderBottom: `1px solid ${border}` }}>
-                        <span className="text-[9px] font-medium" style={{ color: '#1a1a1a' }}>{r.c}</span>
-                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: r.col + '18', color: r.col }}>{r.s}</span>
-                    </div>
-                ))}
-            </div>
-        ),
-    },
-    {
-        url: 'nextstep.app/applications',
-        label: { tr: 'Başvurular', en: 'Applications' },
-        desc: { tr: 'Tüm başvuruları listele, filtrele ve dışa aktar', en: 'List, filter and export all applications' },
-        offset: { x: 32, y: 16, rotate: 2.5 },
-        content: (border: string, inkFaint: string) => (
-            <div className="p-3" style={{ background: '#faf9f6' }}>
-                <div className="flex gap-2 mb-2">
-                    <div className="flex-1 h-6 rounded-lg" style={{ background: '#fff', border: `1px solid ${border}` }} />
-                    <div className="h-6 px-2 rounded-lg flex items-center" style={{ background: '#fff', border: `1px solid ${border}` }}>
-                        <span className="text-[8px]" style={{ color: inkFaint }}>Filtrele</span>
-                    </div>
-                </div>
-                {['Apple / iOS Dev', 'Spotify / Frontend', 'Google / PM', 'Meta / Design', 'Tesla / Backend'].map((row, i) => (
-                    <div key={row} className="flex items-center justify-between py-1.5" style={{ borderBottom: `1px solid ${border}` }}>
-                        <span className="text-[9px] font-medium" style={{ color: '#1a1a1a' }}>{row}</span>
-                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full"
-                            style={{ background: ['#a855f718', '#f9731618', '#22c55e18', '#ec489918', '#3b82f618'][i], color: ['#a855f7', '#f97316', '#22c55e', '#ec4899', '#3b82f6'][i] }}>
-                            {['Görüşme', 'Süreçte', 'Teklif', 'Beklemede', 'Red'][i]}
-                        </span>
-                    </div>
-                ))}
-            </div>
-        ),
-    },
-    {
-        url: 'nextstep.app/analytics',
-        label: { tr: 'Analiz', en: 'Analytics' },
-        desc: { tr: 'Platform, durum ve CV versiyon istatistikleri', en: 'Platform, status and CV version analytics' },
-        offset: { x: -28, y: 24, rotate: -2 },
-        content: (border: string, inkFaint: string) => (
-            <div className="p-4" style={{ background: '#faf9f6' }}>
-                <div className="text-[10px] font-bold mb-3" style={{ color: '#1a1a1a' }}>Platform Dağılımı</div>
-                {[{ l: 'LinkedIn', v: 72, c: '#0077b5' }, { l: 'Kariyer.net', v: 48, c: '#f97316' }, { l: 'Indeed', v: 31, c: '#2557a7' }, { l: 'Doğrudan', v: 18, c: '#a855f7' }].map(b => (
-                    <div key={b.l} className="mb-2">
-                        <div className="flex justify-between text-[8px] mb-0.5">
-                            <span style={{ color: inkFaint }}>{b.l}</span>
-                            <span style={{ color: '#1a1a1a' }}>{b.v}%</span>
-                        </div>
-                        <div className="w-full h-2 rounded-full" style={{ background: border }}>
-                            <div className="h-2 rounded-full" style={{ width: `${b.v}%`, background: b.c }} />
-                        </div>
-                    </div>
-                ))}
-                <div className="mt-3 text-[10px] font-bold mb-2" style={{ color: '#1a1a1a' }}>CV Versiyonları</div>
-                <div className="flex gap-1.5">
-                    {[{ l: 'v1', v: 8, c: '#a855f7' }, { l: 'v2', v: 14, c: '#f97316' }, { l: 'v3', v: 6, c: '#22c55e' }].map(p => (
-                        <div key={p.l} className="flex-1 rounded-xl p-2 text-center" style={{ background: '#fff', border: `1px solid ${border}` }}>
-                            <div className="text-sm font-black" style={{ color: p.c }}>{p.v}</div>
-                            <div className="text-[7px]" style={{ color: inkFaint }}>{p.l}</div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        ),
-    },
-    {
-        url: 'nextstep.app/add',
-        label: { tr: 'Başvuru Ekle', en: 'Add Application' },
-        desc: { tr: 'Hızlı form ile yeni başvuru kaydet', en: 'Log a new application with the quick form' },
-        offset: { x: 24, y: 32, rotate: 1.5 },
-        content: (border: string, inkFaint: string) => (
-            <div className="p-4" style={{ background: '#faf9f6' }}>
-                {[
-                    { l: 'Firma Adı', ph: 'Apple Inc.' },
-                    { l: 'Pozisyon', ph: 'Senior iOS Developer' },
-                    { l: 'İlan Linki', ph: 'linkedin.com/jobs/...' },
-                ].map(f => (
-                    <div key={f.l} className="mb-2">
-                        <div className="text-[8px] font-bold mb-0.5" style={{ color: inkFaint }}>{f.l}</div>
-                        <div className="w-full h-6 rounded-lg px-2 flex items-center" style={{ background: '#fff', border: `1px solid ${border}` }}>
-                            <span className="text-[8px]" style={{ color: '#c4bfb9' }}>{f.ph}</span>
-                        </div>
-                    </div>
-                ))}
-                <div className="grid grid-cols-2 gap-2 mt-1">
-                    <div>
-                        <div className="text-[8px] font-bold mb-0.5" style={{ color: inkFaint }}>Tarih</div>
-                        <div className="h-6 rounded-lg" style={{ background: '#fff', border: `1px solid ${border}` }} />
-                    </div>
-                    <div>
-                        <div className="text-[8px] font-bold mb-0.5" style={{ color: inkFaint }}>Durum</div>
-                        <div className="h-6 rounded-lg" style={{ background: '#fff', border: `1px solid ${border}` }} />
-                    </div>
-                </div>
-                <button className="w-full mt-3 py-2 rounded-xl text-[9px] font-bold text-white" style={{ background: 'linear-gradient(135deg,#f97316,#a855f7)' }}>
-                    Başvuruyu Kaydet
-                </button>
-            </div>
-        ),
-    },
-    {
-        url: 'nextstep.app/cv',
-        label: { tr: 'CV Analizi', en: 'CV Analysis' },
-        desc: { tr: 'ATS skoru, bölüm analizi ve Gemini önerileri', en: 'ATS scoring, section analysis and Gemini tips' },
-        offset: { x: -16, y: 40, rotate: -1 },
-        content: (border: string, inkFaint: string) => (
-            <div className="p-4" style={{ background: '#faf9f6' }}>
-                <div className="flex items-center gap-3 mb-3">
-                    <div className="relative w-14 h-14 flex-shrink-0">
-                        <svg viewBox="0 0 36 36" className="w-14 h-14 -rotate-90">
-                            <circle cx="18" cy="18" r="15" fill="none" stroke={border} strokeWidth="3" />
-                            <circle cx="18" cy="18" r="15" fill="none" stroke="url(#g1)" strokeWidth="3"
-                                strokeDasharray="94.2" strokeDashoffset="23.5" strokeLinecap="round" />
-                            <defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#f97316" /><stop offset="100%" stopColor="#a855f7" /></linearGradient></defs>
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center rotate-90">
-                            <span className="text-[11px] font-black" style={{ color: '#f97316' }}>75</span>
-                        </div>
-                    </div>
-                    <div>
-                        <div className="text-[9px] font-bold" style={{ color: '#1a1a1a' }}>ATS Skoru</div>
-                        <div className="text-[8px]" style={{ color: inkFaint }}>İyi — birkaç iyileştirme önerisi var</div>
-                    </div>
-                </div>
-                {['Deneyim', 'Beceriler', 'Eğitim', 'İletişim'].map((s, i) => (
-                    <div key={s} className="flex items-center gap-2 mb-1.5">
-                        <span className="text-[8px] w-14 flex-shrink-0" style={{ color: inkFaint }}>{s}</span>
-                        <div className="flex-1 h-1.5 rounded-full" style={{ background: border }}>
-                            <div className="h-1.5 rounded-full" style={{ width: `${[90, 75, 60, 85][i]}%`, background: 'linear-gradient(90deg,#f97316,#a855f7)' }} />
-                        </div>
-                    </div>
-                ))}
-            </div>
-        ),
-    },
+    { img: '/screen-dashboard.png', url: 'nextstep.app/dashboard', label: { tr: 'Anasayfa', en: 'Dashboard' }, desc: { tr: 'Anlık özet ve istatistikler', en: 'Live stats and overview' } },
+    { img: '/screen-add.png', url: 'nextstep.app/add', label: { tr: 'Başvuru Ekle', en: 'Add Application' }, desc: { tr: 'Hızlı form ile başvuru kaydet', en: 'Log applications with a quick form' } },
+    { img: '/screen-applications.png', url: 'nextstep.app/applications', label: { tr: 'Başvurular', en: 'Applications' }, desc: { tr: 'Tüm başvuruları listele ve dışa aktar', en: 'List, filter and export applications' } },
+    { img: '/screen-cv.png', url: 'nextstep.app/cv', label: { tr: 'CV Analizi', en: 'CV Analysis' }, desc: { tr: 'ATS skoru ve Gemini önerileri', en: 'ATS scoring and Gemini suggestions' } },
+    { img: '/screen-analytics.png', url: 'nextstep.app/analytics', label: { tr: 'Analiz', en: 'Analytics' }, desc: { tr: 'Platform ve durum istatistikleri', en: 'Platform and status analytics' } },
 ];
 
-const FeatureShowcase = React.memo(({ bone2, border, ink, inkFaint, accent, lang }: ShowcaseProps) => {
+const FeatureShowcase = React.memo(({ bone2, border, ink, inkFaint, lang }: ShowcaseProps) => {
     const [active, setActive] = useState(0);
-    const [hovered, setHovered] = useState<number | null>(null);
     const total = SCREENS.length;
+    const next = () => setActive(p => (p + 1) % total);
+    const prev = () => setActive(p => (p - 1 + total) % total);
 
     return (
-        <div className="mt-16 sm:mt-24 w-full dash-enter" style={{ maxWidth: 720, margin: '5rem auto 0' }}>
-            {/* Stacked window cards */}
-            <div className="relative" style={{ height: 420 }}>
-                {SCREENS.map((screen, idx) => {
-                    const isActive = idx === active;
-                    const isHovered = hovered === idx;
-                    // z ordering: active on top, others behind
-                    const zIndex = isActive ? 50 : isHovered ? 40 : (total - Math.abs(idx - active)) * 5;
-                    // Offset each card so they peek out
-                    const offsetX = isActive ? 0 : screen.offset.x * 0.5;
-                    const offsetY = isActive ? 0 : 16 + idx * 8;
-                    const rotate = isActive ? 0 : screen.offset.rotate;
-                    const scale = isActive ? 1 : isHovered ? 0.97 : 0.93 - idx * 0.01;
+        <div className="dash-enter w-full" style={{ maxWidth: 760, margin: '5rem auto 0' }}>
+            {/* ── Card stack ── */}
+            <div className="relative select-none" style={{ height: 480, perspective: '1200px' }}>
+                {SCREENS.map((s, idx) => {
+                    const offset = idx - active;
+                    const absOffset = Math.abs(offset);
+                    const isActive = offset === 0;
+
+                    // Fan layout: cards spread to left/right of the active one
+                    const tx = offset * 48;                            // horizontal spread
+                    const ty = absOffset * 12;                         // depth sink
+                    const rz = offset * 3;                             // slight fan rotation
+                    const sc = isActive ? 1 : Math.max(0.82, 1 - absOffset * 0.07);
+                    const op = isActive ? 1 : Math.max(0.35, 1 - absOffset * 0.22);
+                    const zIdx = total - absOffset;
 
                     return (
-                        <div key={screen.url}
-                            onClick={() => setActive((active + 1) % total)}
-                            onMouseEnter={() => setHovered(idx)}
-                            onMouseLeave={() => setHovered(null)}
+                        <div key={s.url}
+                            onClick={() => { if (!isActive) setActive(idx); else next(); }}
                             style={{
-                                position: 'absolute', inset: 0,
-                                transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotate}deg) scale(${scale})`,
-                                zIndex,
-                                cursor: 'pointer',
-                                transition: 'transform 0.45s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease, z-index 0s',
+                                position: 'absolute',
+                                left: '50%',
+                                top: 0,
+                                width: '100%',
+                                maxWidth: 680,
+                                transform: `translateX(calc(-50% + ${tx}px)) translateY(${ty}px) rotate(${rz}deg) scale(${sc})`,
+                                opacity: op,
+                                zIndex: zIdx,
+                                cursor: isActive ? 'default' : 'pointer',
+                                transition: 'transform 0.55s cubic-bezier(0.34,1.4,0.64,1), opacity 0.4s ease, box-shadow 0.3s ease',
+                                transformOrigin: 'top center',
                                 borderRadius: 20,
                                 overflow: 'hidden',
-                                border: `1px solid ${isActive ? '#d0ccc6' : border}`,
-                                background: '#fff',
                                 boxShadow: isActive
-                                    ? '0 32px 80px rgba(0,0,0,0.14)'
-                                    : isHovered
-                                        ? '0 16px 48px rgba(0,0,0,0.12)'
-                                        : '0 4px 20px rgba(0,0,0,0.06)',
+                                    ? '0 40px 100px rgba(0,0,0,0.18), 0 0 0 1.5px rgba(249,115,22,0.35)'
+                                    : '0 8px 32px rgba(0,0,0,0.08)',
+                                border: isActive
+                                    ? '1.5px solid rgba(249,115,22,0.25)'
+                                    : `1px solid ${border}`,
+                                background: '#fff',
                             }}>
                             {/* Browser chrome */}
-                            <div className="flex items-center gap-1.5 px-4 py-2.5" style={{ background: '#f5f2ee', borderBottom: `1px solid ${border}` }}>
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]/70" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]/70" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]/70" />
-                                <div className="ml-2 flex-1 max-w-[180px] h-4 rounded px-2 flex items-center" style={{ background: bone2 }}>
-                                    <span className="text-[8px]" style={{ color: inkFaint }}>{screen.url}</span>
-                                </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#f5f2ee', borderBottom: `1px solid ${border}` }}>
+                                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57', opacity: 0.8, display: 'inline-block' }} />
+                                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#febc2e', opacity: 0.8, display: 'inline-block' }} />
+                                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840', opacity: 0.8, display: 'inline-block' }} />
+                                <span style={{ marginLeft: 8, fontSize: 9, color: inkFaint, background: bone2, borderRadius: 6, padding: '2px 8px' }}>{s.url}</span>
                             </div>
-                            {/* Card content */}
-                            {screen.content(border, inkFaint)}
+                            {/* Real screenshot fills the card */}
+                            <img
+                                src={s.img}
+                                alt={lang === 'tr' ? s.label.tr : s.label.en}
+                                draggable={false}
+                                style={{ width: '100%', display: 'block', userSelect: 'none', pointerEvents: 'none', maxHeight: 430, objectFit: 'cover', objectPosition: 'top' }}
+                            />
                         </div>
                     );
                 })}
             </div>
 
-            {/* Label + description */}
-            <div className="mt-6 text-center">
-                <div className="flex justify-center gap-2 mb-4">
-                    {SCREENS.map((_, i) => (
+            {/* ── Tab bar ── */}
+            <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                {/* Pill tabs */}
+                <div style={{ display: 'flex', gap: 8, background: bone2, borderRadius: 999, padding: '6px 8px', border: `1px solid ${border}` }}>
+                    {SCREENS.map((s, i) => (
                         <button key={i} onClick={() => setActive(i)}
-                            className="rounded-full transition-all duration-300"
                             style={{
-                                width: active === i ? 28 : 8,
-                                height: 8,
-                                background: active === i ? (accent as string) : border,
-                            }} />
+                                borderRadius: 999,
+                                padding: '6px 18px',
+                                fontSize: 12,
+                                fontWeight: active === i ? 700 : 500,
+                                border: 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s cubic-bezier(0.34,1.4,0.64,1)',
+                                color: active === i ? '#fff' : inkFaint,
+                                background: active === i
+                                    ? 'linear-gradient(135deg, #f97316, #a855f7)'
+                                    : 'transparent',
+                                boxShadow: active === i ? '0 4px 16px rgba(249,115,22,0.3)' : 'none',
+                            }}>
+                            {lang === 'tr' ? s.label.tr : s.label.en}
+                        </button>
                     ))}
                 </div>
-                <div className="text-base font-bold mb-1" style={{ color: ink }}>
-                    {lang === 'tr' ? SCREENS[active].label.tr : SCREENS[active].label.en}
+
+                {/* Description */}
+                <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontSize: 14, color: inkFaint, margin: 0 }}>
+                        {lang === 'tr' ? SCREENS[active].desc.tr : SCREENS[active].desc.en}
+                    </p>
                 </div>
-                <p className="text-sm" style={{ color: inkFaint }}>
-                    {lang === 'tr' ? SCREENS[active].desc.tr : SCREENS[active].desc.en}
-                </p>
-                <p className="text-xs mt-2" style={{ color: inkFaint }}>
-                    {lang === 'tr' ? '← Karta tıklayarak geçiş yap →' : '← Click to cycle through screens →'}
-                </p>
+
+                {/* Prev / Next arrows */}
+                <div style={{ display: 'flex', gap: 12 }}>
+                    <button onClick={prev}
+                        style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${border}`, background: '#fff', cursor: 'pointer', fontSize: 16, color: ink, transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        ←
+                    </button>
+                    <button onClick={next}
+                        style={{ width: 40, height: 40, borderRadius: '50%', border: 'none', background: 'linear-gradient(135deg,#f97316,#a855f7)', cursor: 'pointer', fontSize: 16, color: '#fff', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        →
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -350,6 +233,7 @@ const FeatureShowcase = React.memo(({ bone2, border, ink, inkFaint, accent, lang
 FeatureShowcase.displayName = 'FeatureShowcase';
 
 // ── Main component ──────────────────────────────────────────────────
+
 const LandingPage = () => {
     const navigate = useNavigate();
     const { t, lang } = useLanguage();
@@ -492,7 +376,7 @@ const LandingPage = () => {
                     </motion.div>
 
                     {/* ── INTERACTIVE FEATURE SHOWCASE ── */}
-                    <FeatureShowcase bone2={bone2} border={border} ink={ink} inkFaint={inkFaint} accent={accent} lang={lang} />
+                    <FeatureShowcase bone2={bone2} border={border} ink={ink} inkFaint={inkFaint} lang={lang} />
                 </div>
             </section>
 
