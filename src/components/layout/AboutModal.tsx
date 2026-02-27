@@ -1,255 +1,294 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Github, Linkedin, Mail, CheckCircle2 } from 'lucide-react';
+import { X, Github, Linkedin, Mail, Zap, Globe, Layers, CheckCircle } from 'lucide-react';
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
-    lang: 'tr' | 'en';
 }
 
-// Helper for the HTML-style typography items
-const CodeLine = ({ tag, content, color = '#1a1a1a' }: { tag: string, content: React.ReactNode, color?: string }) => (
-    <div style={{ fontFamily: '"SF Mono", "JetBrains Mono", "Fira Code", monospace', fontSize: '13px', lineHeight: 1.6, marginBottom: '6px' }}>
-        <span style={{ color: '#a855f7', fontWeight: 600 }}>&lt;{tag}&gt;</span>
-        <span style={{ color, marginLeft: '8px', marginRight: '8px' }}>{content}</span>
-        <span style={{ color: '#a855f7', fontWeight: 600 }}>&lt;/{tag}&gt;</span>
-    </div>
+// Typing effect components
+const TypingText = ({ text, delay = 0, className = '' }: { text: string; delay?: number; className?: string }) => {
+    return (
+        <motion.p
+            initial="hidden"
+            animate="visible"
+            variants={{
+                visible: { transition: { staggerChildren: 0.015, delayChildren: delay } },
+                hidden: {},
+            }}
+            className={className}
+        >
+            {text.split('').map((char, index) => (
+                <motion.span
+                    key={index}
+                    variants={{
+                        hidden: { opacity: 0, y: 5 },
+                        visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 200, damping: 20 } },
+                    }}
+                >
+                    {char}
+                </motion.span>
+            ))}
+        </motion.p>
+    );
+};
+
+// Code line component for Tech Stack
+const CodeLine = ({ tag, text, delay = 0 }: { tag: string; text: string; delay: number }) => (
+    <motion.div
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+        className="font-mono text-[13px] sm:text-[14px] leading-relaxed flex items-start sm:items-center gap-2"
+    >
+        <span className="text-orange-400 font-medium opacity-80">&lt;{tag}&gt;</span>
+        <span className="text-gray-300 font-medium tracking-wide">{text}</span>
+        <span className="text-orange-400 font-medium opacity-80">&lt;/{tag}&gt;</span>
+    </motion.div>
 );
 
-export const AboutModal = ({ isOpen, onClose, lang }: Props) => {
-    // Escape to close
+// Animated floating note
+const Note = ({ text, delay, icon: Icon }: { text: string; delay: number; icon: any }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 15, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ delay, duration: 0.5, type: 'spring', stiffness: 100 }}
+        className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.03] border border-white/[0.05] shadow-lg backdrop-blur-md"
+    >
+        <div className="w-8 h-8 rounded-full bg-white/[0.05] flex items-center justify-center">
+            <Icon size={16} className="text-gray-400" />
+        </div>
+        <span className="text-sm font-medium text-gray-300 tracking-wide">{text}</span>
+    </motion.div>
+);
+
+// Dashboard-style insight card
+const InsightCard = ({ title, desc, delay, icon: Icon, colorClass }: { title: string; desc: string; delay: number; icon: any; colorClass: string }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay, duration: 0.5, ease: 'easeOut' }}
+        className="flex flex-col gap-2 p-5 rounded-[24px] bg-[#1c1c1e] border border-white/[0.04] hover:bg-[#2c2c2e] transition-colors duration-300"
+    >
+        <div className="flex items-center gap-3 mb-1">
+            <div className={`p-2 rounded-xl bg-white/[0.03] ${colorClass}`}>
+                <Icon size={18} strokeWidth={2.5} />
+            </div>
+            <h4 className="text-[13px] font-bold tracking-wider uppercase text-gray-400">{title}</h4>
+        </div>
+        <p className="text-sm text-gray-300 leading-relaxed font-medium">{desc}</p>
+    </motion.div>
+);
+
+export const AboutModal = ({ isOpen, onClose }: Props) => {
+    // ESC listener
     useEffect(() => {
-        const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-        window.addEventListener('keydown', fn);
-        return () => window.removeEventListener('keydown', fn);
+        const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
     }, [onClose]);
 
-    const isEn = lang === 'en';
+    // Reference for scrolling animation control if needed, but since it's a modal, we animate on mount
+    const containerRef = useRef(null);
 
     return (
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop: Apple glassmorphism style */}
+                    {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
                         onClick={onClose}
-                        style={{
-                            position: 'fixed', inset: 0,
-                            background: 'rgba(255,255,255,0.4)',
-                            backdropFilter: 'blur(20px) saturate(180%)',
-                            WebkitBackdropFilter: 'blur(20px)',
-                            zIndex: 200,
-                        }}
+                        className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-2xl"
                     />
 
-                    {/* Modal Card */}
-                    <div style={{
-                        position: 'fixed', inset: 0,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        zIndex: 201, pointerEvents: 'none', padding: '20px'
-                    }}>
+                    {/* Modal Wrapper */}
+                    <div className="fixed inset-0 z-[201] flex items-center justify-center p-4 sm:p-6 md:p-12 pointer-events-none overflow-y-auto">
+
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            transition={{ type: 'spring', stiffness: 260, damping: 25 }}
+                            ref={containerRef}
+                            initial={{ opacity: 0, y: 40, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.98 }}
+                            transition={{ duration: 0.6, type: 'spring', bounce: 0, damping: 25, stiffness: 200 }}
+                            className="relative w-full max-w-[900px] pointer-events-auto rounded-[32px] sm:rounded-[40px] overflow-hidden my-auto"
                             style={{
-                                position: 'relative',
-                                pointerEvents: 'auto',
-                                width: '100%',
-                                maxWidth: '720px',
-                                maxHeight: '90vh',
-                                overflowY: 'auto',
-                                background: '#ffffff',
-                                borderRadius: '32px',
-                                // Smooth Apple-like shadow
-                                boxShadow: '0 40px 100px -20px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',
-                                display: 'flex',
-                                flexDirection: 'column',
+                                // Premium dark matte board style
+                                background: 'radial-gradient(120% 120% at 50% -20%, #2A2A2E 0%, #151516 100%)',
+                                boxShadow: '0 40px 100px -20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)',
                             }}
                         >
-                            {/* Rainbow Accent Top Border */}
-                            <div style={{
-                                position: 'absolute', top: 0, left: 0, right: 0, height: '4px',
-                                background: 'linear-gradient(90deg, #ff5f57, #febc2e, #28c840, #007aff, #a855f7)',
-                                borderTopLeftRadius: '32px', borderTopRightRadius: '32px',
-                            }} />
+                            {/* Subtle Rainbow Accent Line */}
+                            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#ff5f57] via-[#febc2e] to-[#28c840] opacity-80" />
+
+                            {/* Subtle Dust / Grain Overlay */}
+                            <div
+                                className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
+                                style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}
+                            />
 
                             {/* Close Button */}
                             <button
                                 onClick={onClose}
-                                style={{
-                                    position: 'absolute', top: '16px', right: '16px',
-                                    width: '32px', height: '32px',
-                                    borderRadius: '50%',
-                                    background: '#f5f5f7', // Apple gray
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: '#86868b', cursor: 'pointer',
-                                    transition: 'background 0.2s',
-                                    border: 'none',
-                                }}
-                                onMouseEnter={e => e.currentTarget.style.background = '#e5e5ea'}
-                                onMouseLeave={e => e.currentTarget.style.background = '#f5f5f7'}
+                                className="absolute top-5 right-5 sm:top-7 sm:right-7 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300 z-10"
                             >
-                                <X size={16} strokeWidth={2.5} />
+                                <X size={20} />
                             </button>
 
-                            <div style={{ padding: '48px', display: 'flex', flexDirection: 'column', gap: '40px' }}>
+                            {/* Content Inner Container */}
+                            <div className="relative z-10 p-8 sm:p-12 md:p-[72px] flex flex-col gap-16">
 
-                                {/* Top Section: Avatar & Intro */}
-                                <div style={{ display: 'flex', gap: '32px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                    {/* Spider-Man Avatar */}
-                                    <div style={{
-                                        width: '120px', height: '120px', flexShrink: 0,
-                                        borderRadius: '30px', // Apple squircle logic
-                                        overflow: 'hidden',
-                                        background: '#f5f5f7',
-                                        boxShadow: '0 12px 32px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(0,0,0,0.05)',
-                                    }}>
-                                        <img
-                                            src="/spiderman-dev.png"
-                                            alt="Developer"
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                        />
-                                    </div>
+                                {/* ── Header / Intro ── */}
+                                <div className="flex flex-col md:flex-row gap-8 sm:gap-12 items-start">
+                                    {/* Spiderman Avatar */}
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+                                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                                        transition={{ duration: 0.7, type: 'spring', bounce: 0.4 }}
+                                        className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] shrink-0 rounded-[32px] overflow-hidden bg-[#1c1c1e] border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
+                                    >
+                                        <img src="/spiderman.png" alt="Developer" className="w-full h-full object-cover" />
+                                    </motion.div>
 
-                                    {/* Greeting */}
-                                    <div style={{ flex: 1, minWidth: '240px' }}>
-                                        <h2 style={{
-                                            fontSize: '32px', fontWeight: 800, letterSpacing: '-0.03em',
-                                            margin: '0 0 8px 0', color: '#1d1d1f',
-                                            display: 'flex', alignItems: 'center', gap: '10px'
-                                        }}>
-                                            <span style={{
-                                                background: 'linear-gradient(135deg, #f97316, #a855f7)',
-                                                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                                            }}>Hello World.</span> 👋
-                                        </h2>
+                                    <div className="flex-1 space-y-5">
+                                        <motion.h2
+                                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}
+                                            className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-3"
+                                        >
+                                            <span className="opacity-40 font-mono text-[18px]">##</span>
+                                            👤 Hakkımda
+                                        </motion.h2>
 
-                                        <div style={{
-                                            fontFamily: '"SF Mono", "JetBrains Mono", "Fira Code", monospace',
-                                            fontSize: '14px', lineHeight: 1.6, color: '#515154'
-                                        }}>
-                                            <span style={{ color: '#22c55e' }}>// Hakkımda</span><br />
-                                            {isEn
-                                                ? "Hi, I'm Kutluhan. While learning software development, I built this tool to track my own job applications instead of using messy spreadsheets."
-                                                : "Merhaba, ben Kutluhan. Yazılım geliştirme öğrenirken iş başvurularımı takip etmek için bu aracı yaptım."
-                                            }
+                                        <div className="text-[16px] sm:text-[17px] text-gray-300 leading-relaxed font-medium tracking-wide space-y-4">
+                                            <TypingText text="Merhaba, ben Kutluhan." delay={0.4} />
+                                            <TypingText text="Yazılım geliştirmeyi öğrenirken iş başvurularımı sistemli takip edebilmek için NextStep'i geliştirdim." delay={1.0} />
+                                            <TypingText text="Bu proje sadece bir takip aracı değil; disiplin, analiz ve gelişim sürecimin bir yansıması." delay={2.5} className="text-gray-400" />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Link Buttons */}
-                                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                                    {[
-                                        { icon: <Github size={18} />, label: 'GitHub', href: 'https://github.com/kutluhangil', bg: '#1d1d1f', color: '#fff' },
-                                        { icon: <Linkedin size={18} />, label: 'LinkedIn', href: 'https://www.linkedin.com/in/kutluhangil/', bg: '#0A66C2', color: '#fff' },
-                                        { icon: <Mail size={18} />, label: isEn ? 'Email' : 'E-posta', href: 'mailto:kutluhangil@gmail.com', bg: '#f5f5f7', color: '#1d1d1f' },
-                                    ].map(btn => (
-                                        <a key={btn.label} href={btn.href} target="_blank" rel="noopener noreferrer"
-                                            style={{
-                                                display: 'flex', alignItems: 'center', gap: '8px',
-                                                background: btn.bg, color: btn.color,
-                                                padding: '10px 20px', borderRadius: '100px',
-                                                fontSize: '14px', fontWeight: 600, letterSpacing: '-0.01em',
-                                                textDecoration: 'none',
-                                                boxShadow: '0 4px 14px rgba(0,0,0,0.06)',
-                                                transition: 'transform 0.2s, box-shadow 0.2s',
-                                            }}
-                                            onMouseEnter={e => {
-                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.1)';
-                                            }}
-                                            onMouseLeave={e => {
-                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.06)';
-                                            }}
-                                        >
-                                            {btn.icon} {btn.label}
-                                        </a>
-                                    ))}
-                                </div>
 
-                                {/* Checklist Section */}
-                                <div style={{
-                                    background: '#fbfbfd',
-                                    borderRadius: '24px',
-                                    padding: '32px',
-                                    border: '1px solid rgba(0,0,0,0.04)',
-                                }}>
-                                    <div style={{
-                                        fontSize: '12px', fontWeight: 700, letterSpacing: '0.1em',
-                                        textTransform: 'uppercase', color: '#86868b', marginBottom: '24px'
-                                    }}>
-                                        {isEn ? 'Priorities Overview' : 'Neyin Önemi Var?'}
-                                    </div>
+                                {/* ── Main Content Split ── */}
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-start">
 
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                        {[
-                                            {
-                                                title: isEn ? 'Why I built this' : 'Projeyi Neden Yaptım',
-                                                tag: 'h1',
-                                                desc: isEn ? 'Shows personality and motivation' : 'Seni insan yapar, motivasyonu gösterir.',
-                                                badge: isEn ? 'Crucial' : 'Çok Yüksek',
-                                                color: '#ff3b30'
-                                            },
-                                            {
-                                                title: 'Links (GitHub, LinkedIn)',
-                                                tag: 'a',
-                                                desc: isEn ? 'Allows recruiters to reach out' : 'Recruiter\'ın sana ulaşmasını sağlar.',
-                                                badge: isEn ? 'High' : 'Yüksek',
-                                                color: '#ff9500'
-                                            },
-                                            {
-                                                title: 'Tech Stack',
-                                                tag: 'code',
-                                                desc: isEn ? 'Shows exactly what you know instantly' : 'Ne bildiğini anında gösterir.',
-                                                badge: isEn ? 'High' : 'Yüksek',
-                                                color: '#34c759'
-                                            },
-                                            {
-                                                title: isEn ? 'Setup Instructions' : 'Kurulum Talimatları',
-                                                tag: 'pre',
-                                                desc: isEn ? 'Demonstrates professionalism' : 'Ciddiyeti gösterir.',
-                                                badge: isEn ? 'Medium' : 'Orta',
-                                                color: '#007aff'
-                                            },
-                                        ].map((item, i) => (
-                                            <div key={i} style={{
-                                                display: 'flex', gap: '16px', alignItems: 'flex-start',
-                                                paddingBottom: i !== 3 ? '16px' : 0,
-                                                borderBottom: i !== 3 ? '1px solid rgba(0,0,0,0.04)' : 'none'
-                                            }}>
-                                                <div style={{ marginTop: '2px' }}>
-                                                    <CheckCircle2 size={20} color={item.color} strokeWidth={2.5} />
+                                    {/* Left Column: Tech Stack & Notes */}
+                                    <div className="lg:col-span-5 flex flex-col gap-10">
+
+                                        {/* Tech Stack Code Block */}
+                                        <div className="relative group">
+                                            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 to-purple-500/20 rounded-[28px] blur-lg opacity-0 group-hover:opacity-100 transition duration-700" />
+                                            <div className="relative bg-[#111112] border border-white/10 rounded-[24px] p-6 sm:p-8 shadow-2xl overflow-hidden">
+                                                {/* MacOS Window Dots */}
+                                                <div className="flex gap-2 mb-6">
+                                                    <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                                                    <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                                                    <div className="w-3 h-3 rounded-full bg-green-500/80" />
                                                 </div>
-                                                <div style={{ flex: 1 }}>
-                                                    <CodeLine tag={item.tag} content={item.title} color="#1d1d1f" />
-                                                    <div style={{ fontSize: '14px', color: '#86868b', marginTop: '6px', lineHeight: 1.4 }}>
-                                                        {item.desc}
+
+                                                <div className="flex flex-col gap-3">
+                                                    <CodeLine tag="stack" text="" delay={3.5} />
+                                                    <div className="pl-6 flex flex-col gap-3 border-l border-white/5 ml-3 my-1">
+                                                        <CodeLine tag="frontend" text="React + Vite" delay={3.7} />
+                                                        <CodeLine tag="backend" text="Firebase" delay={3.9} />
+                                                        <CodeLine tag="database" text="Firestore" delay={4.1} />
+                                                        <CodeLine tag="ui" text="Tailwind + Motion" delay={4.3} />
                                                     </div>
+                                                    <CodeLine tag="stack" text="" delay={4.5} />
                                                 </div>
-                                                <div style={{
-                                                    background: `${item.color}15`,
-                                                    color: item.color,
-                                                    padding: '4px 10px',
-                                                    borderRadius: '8px',
-                                                    fontSize: '11px',
-                                                    fontWeight: 700,
-                                                    letterSpacing: '0.02em',
-                                                    textTransform: 'uppercase'
-                                                }}>
-                                                    {item.badge}
-                                                </div>
+
+                                                {/* Blinking Cursor */}
+                                                <motion.div
+                                                    animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 1 }}
+                                                    className="w-[8px] h-[18px] bg-orange-400 mt-4 ml-1 rounded-[1px]"
+                                                />
                                             </div>
-                                        ))}
+                                        </div>
+
+                                        {/* Animated Notes */}
+                                        <div className="flex flex-col gap-3">
+                                            <div className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-2 px-2">Kazanımlar</div>
+                                            <Note delay={4.6} icon={CheckCircle} text="Motivasyon" />
+                                            <Note delay={4.8} icon={Layers} text="Sistematik düşünme" />
+                                            <Note delay={5.0} icon={Zap} text="Süreç analizi" />
+                                            <Note delay={5.2} icon={Globe} text="Gelişim takibi" />
+                                        </div>
+
+                                    </div>
+
+                                    {/* Right Column: Insights Panel */}
+                                    <div className="lg:col-span-7 flex flex-col w-full">
+                                        <motion.div
+                                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3.6, duration: 1 }}
+                                            className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-5 px-2"
+                                        >
+                                            Proje Değeri
+                                        </motion.div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <InsightCard
+                                                delay={3.8}
+                                                title="Why I built this"
+                                                desc="Gerçek bir problemi çözmek için yola çıktım. Bu araç, pratik bir ihtiyacın ve kişisel motivasyonun kodlanmış halidir."
+                                                icon={Zap}
+                                                colorClass="text-orange-400"
+                                            />
+                                            <InsightCard
+                                                delay={4.0}
+                                                title="Target Structure"
+                                                desc="Karmaşık bir mimariyi minimal bir UI altında sunarak, işlevsellikten ödün vermeden sadeliği hedefledim."
+                                                icon={Layers}
+                                                colorClass="text-purple-400"
+                                            />
+                                            <InsightCard
+                                                delay={4.2}
+                                                title="Tech Precision"
+                                                desc="Kullanılan teknolojiler rastgele değil; hızı, güvenliği ve ölçeklenebilirliği sağlamak için özel olarak seçildi."
+                                                icon={CheckCircle}
+                                                colorClass="text-green-400"
+                                            />
+                                            <InsightCard
+                                                delay={4.4}
+                                                title="The Outcome"
+                                                desc="Sadece başvuruları değil, kendi kariyer stratejimi ve yazılım geliştirme disiplinimi de yönetebiliyorum."
+                                                icon={Globe}
+                                                colorClass="text-blue-400"
+                                            />
+                                        </div>
+
+                                        {/* Premium Glowing Links */}
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 5.4, duration: 0.6 }}
+                                            className="mt-12 flex flex-wrap gap-4 items-center"
+                                        >
+                                            <a href="https://github.com/kutluhangil" target="_blank" rel="noopener noreferrer" className="group relative">
+                                                <div className="absolute inset-0 bg-white/20 blur-md rounded-full opacity-0 group-hover:opacity-100 transition duration-300" />
+                                                <div className="relative flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-full hover:scale-105 transition-all duration-300">
+                                                    <Github size={18} /><span>GitHub</span>
+                                                </div>
+                                            </a>
+
+                                            <a href="https://www.linkedin.com/in/kutluhangil/" target="_blank" rel="noopener noreferrer" className="group relative">
+                                                <div className="absolute inset-0 bg-[#0A66C2]/40 blur-md rounded-full opacity-0 group-hover:opacity-100 transition duration-300" />
+                                                <div className="relative flex items-center gap-2 px-6 py-3 bg-[#0A66C2] text-white font-semibold rounded-full border border-white/10 hover:scale-105 transition-all duration-300">
+                                                    <Linkedin size={18} /><span>LinkedIn</span>
+                                                </div>
+                                            </a>
+
+                                            <a href="mailto:kutluhangul@windowslive.com" className="group relative">
+                                                <div className="absolute inset-0 bg-white/10 blur-md rounded-full opacity-0 group-hover:opacity-100 transition duration-300" />
+                                                <div className="relative flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 text-white font-semibold rounded-full hover:bg-white/10 hover:scale-105 transition-all duration-300">
+                                                    <Mail size={18} /><span>İletişime Geç</span>
+                                                </div>
+                                            </a>
+                                        </motion.div>
+
                                     </div>
                                 </div>
+
                             </div>
                         </motion.div>
                     </div>

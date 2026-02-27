@@ -516,7 +516,7 @@ const LandingPage = () => {
                 </div>
             </footer>
 
-            <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)} lang={lang as 'tr' | 'en'} />
+            <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)} />
         </div>
     );
 };
