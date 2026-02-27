@@ -508,7 +508,7 @@ const LandingPage = () => {
                         <span className="font-bold tracking-tight" style={{ color: ink }}>NextStep</span>
                     </div>
                     <p className="text-xs" style={{ color: inkFaint }}>
-                        {lang === 'tr' ? 'Kutluhan Gül tarafından iş başvurularını takip etmek için.' : 'Built by Kutluhan Gül for smarter job tracking.'}
+                        {lang === 'tr' ? 'Kutluhan Gül tarafından iş başvurularını takip etmek için yapılmıştır.' : 'Built by Kutluhan Gül for smarter job tracking.'}
                     </p>
                     <p className="text-xs" style={{ color: inkFaint }}>© 2026 NextStep</p>
                 </div>
