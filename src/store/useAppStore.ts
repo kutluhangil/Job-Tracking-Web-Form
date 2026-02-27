@@ -59,11 +59,21 @@ export interface Application {
     createdAt: number;
 }
 
+export type Theme = 'light' | 'dark' | 'system';
+
+export interface NotificationPrefs {
+    weeklyReport: boolean;
+    reminderInactive: boolean;
+    offerAlerts: boolean;
+}
+
 interface AppState {
     isAuthenticated: boolean;
     firebaseUid: string | null;
     user: { name: string; email: string } | null;
     applications: Application[];
+    theme: Theme;
+    notifications: NotificationPrefs;
 
     // Actions
     login: (email: string, name?: string, uid?: string) => void;
@@ -72,6 +82,8 @@ interface AppState {
     updateApplication: (id: string, app: Partial<Application>) => void;
     deleteApplication: (id: string) => void;
     setApplications: (apps: Application[]) => void;
+    setTheme: (theme: Theme) => void;
+    setNotifications: (prefs: Partial<NotificationPrefs>) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -81,6 +93,12 @@ export const useAppStore = create<AppState>()(
             firebaseUid: null,
             user: null,
             applications: [],
+            theme: 'light' as Theme,
+            notifications: {
+                weeklyReport: true,
+                reminderInactive: true,
+                offerAlerts: false,
+            },
 
             login: (email, name = 'Kullanıcı', uid) =>
                 set({ isAuthenticated: true, firebaseUid: uid ?? null, user: { name, email } }),
@@ -115,6 +133,11 @@ export const useAppStore = create<AppState>()(
                 })),
 
             setApplications: (apps) => set({ applications: apps }),
+
+            setTheme: (theme) => set({ theme }),
+
+            setNotifications: (prefs) =>
+                set((state) => ({ notifications: { ...state.notifications, ...prefs } })),
         }),
         {
             name: 'nextstep-storage',

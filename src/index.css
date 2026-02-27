@@ -150,6 +150,52 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ───────────────────────────────────────────────
+   DARK MODE  — apply to <html data-theme="dark">
+─────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --color-apple-bg: #0d0d0f;
+  --color-apple-text: #f5f5f7;
+  --color-apple-gray: #98989d;
+  --color-apple-light: #1c1c1e;
+  --color-apple-border: #3a3a3c;
+  --color-apple-blue: #0a84ff;
+}
+
+[data-theme="dark"] body {
+  background-color: var(--color-apple-bg);
+  color: var(--color-apple-text);
+}
+
+/* Dark glass dock override */
+[data-theme="dark"] .glass-dock {
+  background: rgba(28, 28, 30, 0.85);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark apple-card override */
+[data-theme="dark"] .apple-card {
+  background: rgba(28, 28, 30, 0.8);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .apple-glass-card {
+  background: rgba(22, 22, 24, 0.75);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+/* Dark btn-ghost */
+[data-theme="dark"] .btn-ghost {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f5f5f7;
+}
+
+[data-theme="dark"] .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+
 @keyframes gradientBg {
   0% {
     background-position: 0% 50%;

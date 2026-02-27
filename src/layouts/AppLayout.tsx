@@ -2,9 +2,13 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { FloatingDock } from '../components/common/FloatingDock';
 import { GeminiWidget } from '../components/common/GeminiWidget';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTheme } from '../hooks/useTheme';
+
 
 export default function AppLayout() {
     const location = useLocation();
+    useTheme(); // Apply data-theme to <html> based on stored preference
+
 
     return (
         <div className="relative min-h-screen w-full overflow-hidden bg-[#f8f8fa] text-[#1d1d1f]">
