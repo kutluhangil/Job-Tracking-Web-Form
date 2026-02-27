@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
 import { Menu, X } from 'lucide-react';
-import NextLogo from '../icons/NEXT.svg';
+import NextLogo from '../Icons/NEXT.svg';
 import { useLanguage } from '../../lib/i18n';
 
 export const Navbar = ({ onAboutClick }: { onAboutClick?: () => void }) => {
