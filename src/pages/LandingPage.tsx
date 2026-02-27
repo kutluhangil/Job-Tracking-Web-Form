@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
+import { AboutModal } from '../components/layout/AboutModal';
 import { useLanguage } from '../lib/i18n';
 
 // ── Word Cycler — reliable setInterval approach ───────────────
@@ -235,6 +236,7 @@ FeatureShowcase.displayName = 'FeatureShowcase';
 // ── Main component ──────────────────────────────────────────────────
 
 const LandingPage = () => {
+    const [showAbout, setShowAbout] = useState(false);
     const navigate = useNavigate();
     const { t, lang } = useLanguage();
     const [activeStep, setActiveStep] = useState(0);
@@ -297,7 +299,7 @@ const LandingPage = () => {
             color: ink,
             fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif',
         }}>
-            <Navbar />
+            <Navbar onAboutClick={() => setShowAbout(true)} />
 
             {/* ── HERO ──────────────────────────────────────────── */}
             <section ref={heroRef} className="relative min-h-[100dvh] flex flex-col items-center justify-center text-center px-5 overflow-hidden">
@@ -513,6 +515,8 @@ const LandingPage = () => {
                     <p className="text-xs" style={{ color: inkFaint }}>© 2026 NextStep</p>
                 </div>
             </footer>
+
+            <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)} lang={lang as 'tr' | 'en'} />
         </div>
     );
 };

@@ -6,7 +6,7 @@ import { Menu, X } from 'lucide-react';
 import NextLogo from '../icons/NEXT.svg';
 import { useLanguage } from '../../lib/i18n';
 
-export const Navbar = () => {
+export const Navbar = ({ onAboutClick }: { onAboutClick?: () => void }) => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const isAuthenticated = useAppStore(state => state.isAuthenticated);
@@ -47,6 +47,12 @@ export const Navbar = () => {
                     {/* Desktop Nav */}
                     <div className="hidden md:flex items-center gap-3">
                         <LangToggle />
+                        {onAboutClick && (
+                            <button onClick={onAboutClick}
+                                className="text-sm font-medium text-black/60 hover:text-black transition-colors px-3 py-2 tracking-wide">
+                                About
+                            </button>
+                        )}
                         {isAuthenticated ? (
                             <button onClick={() => navigate('/dashboard')}
                                 className="rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition-transform hover:scale-105">
@@ -95,6 +101,12 @@ export const Navbar = () => {
                                 </button>
                             </div>
                             <div className="flex flex-col gap-3 px-5 mt-6">
+                                {onAboutClick && (
+                                    <button onClick={() => { setIsMobileMenuOpen(false); onAboutClick(); }}
+                                        className="w-full py-4 text-lg font-medium text-black border-b border-black/5 text-left">
+                                        About
+                                    </button>
+                                )}
                                 {isAuthenticated ? (
                                     <button onClick={() => { setIsMobileMenuOpen(false); navigate('/dashboard'); }}
                                         className="w-full text-center rounded-2xl bg-black py-4 text-base font-medium text-white">
